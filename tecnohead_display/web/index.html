@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta name="theme-color" content="#1a0d0a">
+    <title>Tecnohead Display</title>
+    <link rel="stylesheet" href="static/style.css">
+  </head>
+  <body>
+    <div class="ambient ambient-one"></div>
+    <div class="ambient ambient-two"></div>
+    <div class="ambient ambient-three"></div>
+
+    <div class="display-shell">
+      <aside class="room-rail" aria-label="Cômodos e áreas">
+        <div class="brand-lockup">
+          <div class="brand-mark">TH</div>
+          <div>
+            <div class="brand-name">TECNOHEAD</div>
+            <div class="brand-subtitle">DISPLAY</div>
+          </div>
+        </div>
+
+        <div class="rail-scroll">
+          <button class="rail-button is-active" data-view="all" type="button">
+            <span class="rail-icon">⌂</span><span>Casa</span>
+          </button>
+          <div class="rail-label">CÔMODOS</div>
+          <div id="room-list"></div>
+        </div>
+
+        <div class="rail-bottom">
+          <button class="rail-button" data-view="garage" type="button">
+            <span class="rail-icon">▱</span><span>Garagem</span>
+          </button>
+          <button class="rail-button" data-view="energy" type="button">
+            <span class="rail-icon">ϟ</span><span>Energia</span>
+          </button>
+          <div class="connection-pill" id="connection-pill">
+            <span class="connection-dot"></span><span id="connection-label">Conectando</span>
+          </div>
+        </div>
+      </aside>
+
+      <main class="main-panel">
+        <header class="topbar">
+          <div class="title-block">
+            <div class="eyebrow" id="eyebrow">TECNOHEAD DISPLAY</div>
+            <h1 id="page-title">Casa</h1>
+            <p id="page-subtitle">Seu ambiente, em um só lugar.</p>
+          </div>
+          <div class="topbar-actions">
+            <div class="last-update" id="last-update">—</div>
+            <button class="icon-button" id="refresh-button" type="button" title="Atualizar agora" aria-label="Atualizar agora">↻</button>
+          </div>
+        </header>
+
+        <section class="view-section" id="room-view">
+          <div class="overview-strip" id="overview-strip"></div>
+          <div class="scene-panel" id="scene-panel"></div>
+          <div class="dashboard-grid" id="room-grid"></div>
+        </section>
+
+        <section class="view-section is-hidden" id="energy-view">
+          <div class="energy-intro">
+            <div>
+              <div class="eyebrow">FLUXO DA CASA</div>
+              <h2>Energia agora</h2>
+              <p>Leitura baseada nos sensores de energia configurados no Home Assistant.</p>
+            </div>
+            <div class="energy-badge">AO VIVO</div>
+          </div>
+          <div class="energy-flow" id="energy-flow"></div>
+          <div class="metric-grid" id="energy-metrics"></div>
+        </section>
+
+        <section class="view-section is-hidden" id="garage-view">
+          <div class="garage-intro">
+            <div>
+              <div class="eyebrow">GARAGEM</div>
+              <h2>Carregamento e acesso</h2>
+              <p>Carro, wallbox, portão e sensores encontrados por área e nome.</p>
+            </div>
+            <div class="garage-illustration" aria-hidden="true">▰</div>
+          </div>
+          <div class="dashboard-grid" id="garage-grid"></div>
+        </section>
+      </main>
+    </div>
+
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+    <script src="static/dashboard.js" defer></script>
+  </body>
+</html>
+

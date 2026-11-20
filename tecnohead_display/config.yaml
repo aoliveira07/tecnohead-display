@@ -1,0 +1,27 @@
+name: Tecnohead Display
+version: "0.1.0"
+slug: tecnohead_display
+description: Painel touch Tecnohead em vidro laranja para controlar o Home Assistant.
+url: https://github.com/aoliveira07/tecnohead-display
+arch:
+  - amd64
+  - aarch64
+startup: application
+boot: auto
+init: true
+ingress: true
+ingress_port: 8099
+panel_icon: mdi:monitor-dashboard
+panel_title: Tecnohead Display
+ports:
+  8099/tcp: null
+ports_description:
+  8099/tcp: Interface direta opcional do painel
+options:
+  ha_url: http://supervisor/core
+  refresh_seconds: 10
+schema:
+  ha_url: str
+  refresh_seconds: int(3,120)
+homeassistant_api: true
+
