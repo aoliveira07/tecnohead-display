@@ -1,0 +1,65 @@
+#!/bin/sh
+set -u
+
+umask 077
+
+URL_FILE=/etc/tecnohead/kiosk-url
+PROFILE_DIR="${HOME}/.config/chromium-kiosk"
+STATE_DIR="${HOME}/.local/state/tecnohead-kiosk"
+EXTENSION_DIR="${HOME}/tecnohead-display-kiosk"
+
+mkdir -p "$PROFILE_DIR" "$STATE_DIR"
+
+if [ -r "$URL_FILE" ]; then
+    URL=$(sed -n '1p' "$URL_FILE")
+else
+    URL=http://192.168.0.200:8123
+fi
+
+is_ha_reachable() {
+    curl -sS -o /dev/null --max-time 5 "$URL"
+}
+
+while :; do
+    while ! is_ha_reachable; do
+        sleep 5
+    done
+
+    chromium \
+        --kiosk \
+        --start-fullscreen \
+        --no-first-run \
+        --no-default-browser-check \
+        --disable-session-crashed-bubble \
+        --disable-infobars \
+        --noerrdialogs \
+        --disable-translate \
+        --disable-features=Translate,MediaRouter \
+        --touch-events=enabled \
+        --disable-pinch \
+        --overscroll-history-navigation=0 \
+        --password-store=basic \
+        --load-extension="$EXTENSION_DIR" \
+        --user-data-dir="$PROFILE_DIR" \
+        "$URL" >>"$STATE_DIR/chromium.log" 2>&1 &
+    browser_pid=$!
+
+    failures=0
+    while kill -0 "$browser_pid" 2>/dev/null; do
+        sleep 15
+        if is_ha_reachable; then
+            failures=0
+        else
+            failures=$((failures + 1))
+            if [ "$failures" -ge 4 ]; then
+                kill "$browser_pid" 2>/dev/null || true
+                sleep 5
+                kill -KILL "$browser_pid" 2>/dev/null || true
+                break
+            fi
+        fi
+    done
+
+    wait "$browser_pid" 2>/dev/null || true
+    sleep 2
+done
