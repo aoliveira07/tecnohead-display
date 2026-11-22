@@ -3,9 +3,9 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-    <meta name="theme-color" content="#1a0d0a">
+    <meta name="theme-color" content="#161b20">
     <title>Tecnohead Display</title>
-    <link rel="stylesheet" href="static/style.css?v=0.1.4">
+    <link rel="stylesheet" href="static/style.css?v=0.2.0">
   </head>
   <body>
     <div class="ambient ambient-one"></div>
@@ -20,6 +20,15 @@
             <div class="brand-name">TECNOHEAD</div>
             <div class="brand-subtitle">DISPLAY</div>
           </div>
+        </div>
+
+        <div class="sidebar-context" aria-live="polite">
+          <div class="sidebar-clock" id="sidebar-clock">--:--</div>
+          <div class="sidebar-date" id="sidebar-date">—</div>
+          <div class="sidebar-greeting" id="sidebar-greeting">Conectando…</div>
+          <div class="sidebar-active" id="sidebar-active"></div>
+          <div class="sidebar-divider"></div>
+          <div class="sidebar-energy" id="sidebar-energy"></div>
         </div>
 
         <div class="rail-scroll">
@@ -86,11 +95,13 @@
           </div>
           <div class="dashboard-grid" id="garage-grid"></div>
         </section>
+
+        <nav class="quick-actions" id="quick-actions" aria-label="Atalhos rápidos"></nav>
       </main>
     </div>
 
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
-    <script src="static/dashboard.js?v=0.1.4" defer></script>
+    <script src="static/dashboard.js?v=0.2.0" defer></script>
   </body>
 </html>
 

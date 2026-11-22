@@ -169,6 +169,56 @@
     });
   }
 
+  function levelPercent(entity) {
+    const attributes = entityAttributes(entity);
+    let value = null;
+    if (attributes.brightness != null) value = Number(attributes.brightness) / 255 * 100;
+    else if (attributes.volume_level != null) value = Number(attributes.volume_level) * 100;
+    else if (attributes.percentage != null) value = Number(attributes.percentage);
+    else if (entity.domain === "cover" && attributes.current_position != null) value = Number(attributes.current_position);
+    if (!Number.isFinite(value)) return null;
+    return Math.max(0, Math.min(100, Math.round(value)));
+  }
+
+  function levelRing(entity) {
+    const level = levelPercent(entity);
+    if (level === null) return "";
+    return `<div class="level-ring" style="--level: ${level}%" aria-label="${level}%"><span>${level}%</span></div>`;
+  }
+
+  function renderSidebar() {
+    const now = new Date();
+    const hour = now.getHours();
+    const greeting = hour < 12 ? "Bom dia" : hour < 18 ? "Boa tarde" : "Boa noite";
+    const date = new Intl.DateTimeFormat("pt-BR", {
+      weekday: "long",
+      day: "numeric",
+      month: "long",
+    }).format(now);
+    $("#sidebar-clock").textContent = new Intl.DateTimeFormat("pt-BR", {
+      hour: "2-digit",
+      minute: "2-digit",
+    }).format(now);
+    $("#sidebar-date").textContent = date.charAt(0).toUpperCase() + date.slice(1);
+    $("#sidebar-greeting").textContent = `${greeting} · Tecnohead`;
+
+    if (!state.payload) return;
+    const active = roomEntities(allEntities()).filter(isOn);
+    const names = active.slice(0, 3).map((entity) => entity.name).join(", ");
+    $("#sidebar-active").innerHTML = active.length
+      ? `<strong>${active.length} ${active.length === 1 ? "dispositivo ligado" : "dispositivos ligados"}</strong><span>${esc(names)}${active.length > 3 ? "…" : ""}</span>`
+      : `<strong>Casa tranquila</strong><span>Nenhum dispositivo ligado</span>`;
+
+    const generation = metricValue("generation");
+    const consumption = metricValue("consumption");
+    const readings = [];
+    if (generation.value !== "—") readings.push(`<span><b>Geração</b>${esc(generation.value)} ${esc(generation.unit)}</span>`);
+    if (consumption.value !== "—") readings.push(`<span><b>Consumo</b>${esc(consumption.value)} ${esc(consumption.unit)}</span>`);
+    $("#sidebar-energy").innerHTML = readings.length
+      ? `<div class="sidebar-section-label">ENERGIA AGORA</div>${readings.join("")}`
+      : `<div class="sidebar-section-label">ENERGIA AGORA</div><span>Sem sensores mapeados</span>`;
+  }
+
   function renderOverview() {
     const summary = state.payload?.summary || {};
     const discovered = currentEntities();
@@ -203,6 +253,23 @@
     `;
   }
 
+  function renderQuickActions() {
+    const scenes = (state.payload?.scenes || []).slice(0, 3);
+    const actions = [
+      { view: "all", icon: "⌂", label: "Casa" },
+      ...scenes.map((scene) => ({ scene: scene.entity_id, icon: "✦", label: scene.name })),
+      { view: "garage", icon: "▱", label: "Garagem" },
+      { view: "energy", icon: "ϟ", label: "Energia" },
+    ];
+    $("#quick-actions").innerHTML = actions.map((action) => {
+      const selected = action.view === state.view && (!action.view || state.view === action.view);
+      if (action.scene) {
+        return `<button class="quick-action" data-action="scene" data-id="${esc(action.scene)}" type="button"><span>${action.icon}</span>${esc(action.label)}</button>`;
+      }
+      return `<button class="quick-action ${selected ? "is-active" : ""}" data-view="${action.view}" type="button"><span>${action.icon}</span>${esc(action.label)}</button>`;
+    }).join("");
+  }
+
   function cardHeader(entity) {
     return `
       <div class="card-top">
@@ -211,6 +278,7 @@
           <div class="card-name" title="${esc(entity.name)}">${esc(entity.name)}</div>
           <div class="card-meta" title="${esc(entity.area_name || entity.entity_id)}">${esc(entity.area_name || entity.entity_id)}</div>
         </div>
+        ${levelRing(entity)}
       </div>
     `;
   }
@@ -226,7 +294,7 @@
     const volume = attributes.volume_level == null ? 0 : Math.round(Number(attributes.volume_level) * 100);
     const sources = Array.isArray(attributes.source_list) ? attributes.source_list : [];
     return `
-      <article class="card card-wide">
+      <article class="card card-wide ${isPlaying(entity) ? "is-active" : ""}">
         ${cardHeader(entity)}
         <div class="entity-state ${attributes.media_title ? "" : "is-muted"}">${esc(title)}</div>
         <div class="card-meta">${esc(artist)}</div>
@@ -255,7 +323,7 @@
       control = `<button class="toggle-button" data-action="entity" data-id="${esc(entity.entity_id)}" data-command="press" type="button">Acionar</button>`;
     }
     return `
-      <article class="card">
+      <article class="card ${isOn(entity) ? "is-active" : ""}">
         ${cardHeader(entity)}
         <div class="entity-state">${displayValue(entity)}</div>
         ${control}
@@ -268,7 +336,7 @@
     const attributes = entityAttributes(entity);
     const detail = attributes.hvac_action || attributes.hvac_mode || attributes.media_title || entity.device_name || humanState(entity);
     return `
-      <article class="card">
+      <article class="card ${isOn(entity) ? "is-active" : ""}">
         ${cardHeader(entity)}
         <div class="entity-state">${displayValue(entity)}</div>
         <div class="card-meta">${esc(detail)}</div>
@@ -331,6 +399,8 @@
   function render() {
     if (!state.payload) return;
     renderRoomList();
+    renderSidebar();
+    renderQuickActions();
     const room = $("#room-view");
     const energy = $("#energy-view");
     const garage = $("#garage-view");
@@ -460,5 +530,6 @@
 
   $("#refresh-button").addEventListener("click", () => load(true));
   load(false);
+  window.setInterval(renderSidebar, 30000);
 })();
 

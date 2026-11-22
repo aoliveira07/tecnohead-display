@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.2.0
+
+- Atualiza a interface para o layout grafite inspirado no mockup aprovado.
+- Adiciona contexto lateral com relógio, saudação, dispositivos ativos e energia.
+- Adiciona atalhos inferiores para casa, cenas, garagem e energia.
+- Exibe anéis de nível para brilho, volume e posição quando o Home Assistant fornece esses dados.
+
 ## 0.1.4
 
 - Torna a navegação lateral compatível com toque e caneta usando pointer events.
