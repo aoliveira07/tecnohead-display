@@ -343,6 +343,12 @@
     $("#last-update").textContent = formatUpdated(state.payload.updated_at);
   }
 
+  function selectViewButton(viewButton) {
+    state.view = viewButton.dataset.view;
+    state.areaId = viewButton.dataset.areaId || null;
+    render();
+  }
+
   async function load(showToast = false) {
     if (state.loading) return;
     state.loading = true;
@@ -413,12 +419,25 @@
     }
   }
 
+  let lastTouchNavigation = 0;
+
+  // Some Chromium/touchscreen combinations scroll the rail without emitting
+  // a click reliably. Commit the room selection on the touch pointer itself;
+  // the short guard prevents the synthetic click from running twice.
+  document.addEventListener("pointerup", (event) => {
+    if (!["touch", "pen"].includes(event.pointerType)) return;
+    const viewButton = event.target?.closest?.("[data-view]");
+    if (!viewButton) return;
+    event.preventDefault();
+    lastTouchNavigation = performance.now();
+    selectViewButton(viewButton);
+  }, { passive: false });
+
   document.addEventListener("click", (event) => {
     const viewButton = event.target.closest("[data-view]");
     if (viewButton) {
-      state.view = viewButton.dataset.view;
-      state.areaId = viewButton.dataset.areaId || null;
-      render();
+      if (performance.now() - lastTouchNavigation < 700) return;
+      selectViewButton(viewButton);
       return;
     }
     const sceneButton = event.target.closest('[data-action="scene"]');

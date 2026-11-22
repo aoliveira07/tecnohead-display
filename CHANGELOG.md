@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.1.4
+
+- Torna a navegação lateral compatível com toque e caneta usando pointer events.
+- Reforça a área de toque e o comportamento de rolagem dos cômodos.
+
 ## 0.1.3
 
 - Força a reconstrução do contêiner e invalida os assets estáticos após a atualização.
