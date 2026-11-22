@@ -959,9 +959,12 @@
       ? explicitAreas
       : configAreas().filter((area) => roomGroupKey(area) === group.key).map((area) => area.id);
     const selectedIds = new Set(Array.isArray(group.entity_ids) ? group.entity_ids : []);
+    const relevant = group.key === "garagem"
+      ? garageDisplayRelevant
+      : (entity) => configEntityRelevant(entity, group.key);
     return allEntities().filter((entity) => (
       (areaIds.includes(entity.area_id) || selectedIds.has(entity.entity_id))
-      && configEntityRelevant(entity, group.key)
+      && (relevant(entity) || selectedIds.has(entity.entity_id))
     ));
   }
 

@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.6.3
+
+- Remove a duplicação de sensores técnicos da seção Garagem no editor, mantendo apenas controles, carregamento e métricas do veículo.
+
 ## 0.6.2
 
 - Deixa a garagem focada nos controles e métricas úteis do Volvo e do carregador, sem despejar sensores técnicos na tela inicial.
