@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.6.7
+
+- inclui Pillow no pacote do add-on para que a normalização de fotos funcione na imagem publicada;
+- mantém as fotos do Immich em 1920x1080, com orientação EXIF corrigida e a foto inteira preservada.
+
 ## 0.6.6
 
 - Normaliza as fotos do Immich para o canvas paisagem real do quiosque: 1920×1080.
