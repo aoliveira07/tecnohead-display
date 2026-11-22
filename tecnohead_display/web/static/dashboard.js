@@ -22,7 +22,6 @@
   const roomList = $("#room-list");
   const photoFrame = $("#photo-frame");
   const photoImage = $("#photo-frame-image");
-  const photoName = $("#photo-frame-name");
 
   const ICONS = {
     light: "light",
@@ -216,7 +215,6 @@
     const cacheBust = photo.updated_at ? `?v=${encodeURIComponent(photo.updated_at)}` : "";
     photoImage.src = `${photo.url}${cacheBust}`;
     photoImage.alt = photo.name || "Foto do álbum Tecnohead Display";
-    photoName.textContent = photo.name || "Porta-retrato";
   }
 
   function showPhotoFrame() {

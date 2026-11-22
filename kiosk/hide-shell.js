@@ -20,6 +20,8 @@
     const direct = root.querySelector?.(selector);
     if (direct) return direct;
     for (const element of root.querySelectorAll?.("*") || []) {
+      const lightDomMatch = element.querySelector?.(selector);
+      if (lightDomMatch) return lightDomMatch;
       if (!element.shadowRoot) continue;
       const found = findDeep(element.shadowRoot, selector);
       if (found) return found;
@@ -31,12 +33,15 @@
     const homeAssistant = document.querySelector("home-assistant");
     const main = homeAssistant?.shadowRoot?.querySelector("home-assistant-main");
     const drawer = main?.shadowRoot?.querySelector("ha-drawer") || findDeep(document, "ha-drawer");
-    const sidebar = drawer?.shadowRoot?.querySelector("ha-sidebar") || findDeep(document, "ha-sidebar");
+    const sidebar = drawer?.shadowRoot?.querySelector("ha-sidebar")
+      || drawer?.querySelector("ha-sidebar")
+      || findDeep(document, "ha-sidebar");
     const resolver = drawer?.shadowRoot?.querySelector("partial-panel-resolver")
       || drawer?.querySelector("partial-panel-resolver")
       || findDeep(document, "partial-panel-resolver");
     const panel = resolver?.shadowRoot?.querySelector("ha-panel-app")
       || resolver?.querySelector("ha-panel-app")
+      || drawer?.querySelector("ha-panel-app")
       || findDeep(document, "ha-panel-app");
     const appContent = drawer?.shadowRoot?.querySelector(".app-content")
       || main?.shadowRoot?.querySelector(".app-content")

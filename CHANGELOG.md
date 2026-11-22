@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.6.4
+
+- Remove o nome do arquivo do porta-retrato.
+- Faz as fotos preencherem o display com corte proporcional, sem barras pretas causadas pela diferença de proporção.
+
 ## 0.6.3
 
 - Remove a duplicação de sensores técnicos da seção Garagem no editor, mantendo apenas controles, carregamento e métricas do veículo.
