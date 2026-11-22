@@ -1,5 +1,5 @@
 name: Tecnohead Display
-version: "0.1.2"
+version: "0.1.3"
 slug: tecnohead_display
 description: Painel touch Tecnohead em vidro laranja para controlar o Home Assistant.
 url: https://github.com/aoliveira07/tecnohead-display

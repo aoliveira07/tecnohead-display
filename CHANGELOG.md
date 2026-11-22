@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.1.3
+
+- Força a reconstrução do contêiner e invalida os assets estáticos após a atualização.
+
 ## 0.1.2
 
 - Reduz a renderização dos cômodos aos controles e mídias relevantes.
