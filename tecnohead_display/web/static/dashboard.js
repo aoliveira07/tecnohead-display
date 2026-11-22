@@ -284,6 +284,152 @@
     return `<div class="level-ring" style="--level: ${level}%" aria-label="${level}%"><span>${level}%</span></div>`;
   }
 
+  function roomGroupKey(area) {
+    const text = `${area?.name || ""} ${area?.id || ""}`.toLowerCase();
+    if (text.includes("coz")) return "cozinha";
+    if (text.includes("extern") || text.includes("pisc")) return "externo";
+    if (text.includes("garag") || text.includes("garage")) return "garagem";
+    return null;
+  }
+
+  function homeRoomGroups() {
+    const groups = new Map();
+    for (const area of state.payload?.areas || []) {
+      const key = roomGroupKey(area);
+      if (!key) continue;
+      if (!groups.has(key)) {
+        groups.set(key, {
+          key,
+          label: key === "cozinha" ? "Cozinha" : key === "externo" ? "Externo" : "Garagem",
+          icon: key === "cozinha" ? "⌂" : key === "externo" ? "♧" : "▱",
+          areaId: area.id,
+          entities: [],
+        });
+      }
+      const group = groups.get(key);
+      group.entities.push(...(area.entities || []));
+    }
+    return ["cozinha", "externo", "garagem"]
+      .map((key) => groups.get(key))
+      .filter(Boolean)
+      .map((group) => ({
+        ...group,
+        entities: [...new Map(group.entities.map((entity) => [entity.entity_id, entity])).values()],
+      }));
+  }
+
+  function featuredEntities(entities, limit = 4) {
+    const order = {
+      light: 1,
+      switch: 2,
+      fan: 3,
+      cover: 4,
+      media_player: 5,
+      input_boolean: 6,
+      lock: 7,
+      climate: 8,
+      button: 9,
+    };
+    return roomEntities(entities)
+      .filter((entity) => entityAttributes(entity).entity_category !== "diagnostic")
+      .sort((left, right) => (order[left.domain] || 99) - (order[right.domain] || 99))
+      .slice(0, limit);
+  }
+
+  function tileAction(entity) {
+    if (["light", "switch", "fan", "input_boolean"].includes(entity.domain)) {
+      return `data-action="entity" data-id="${esc(entity.entity_id)}" data-command="toggle"`;
+    }
+    return "";
+  }
+
+  function displayTile(entity) {
+    const clickable = ["light", "switch", "fan", "input_boolean"].includes(entity.domain);
+    const detail = entity.domain === "media_player"
+      ? entityAttributes(entity).media_title || humanState(entity)
+      : humanState(entity);
+    return `
+      <article class="display-tile ${isOn(entity) ? "is-active" : ""} ${clickable ? "is-touchable" : ""}" ${tileAction(entity)}>
+        <div class="tile-top"><div class="tile-icon">${iconFor(entity)}</div>${levelRing(entity)}</div>
+        <div class="tile-name" title="${esc(entity.name)}">${esc(entity.name)}</div>
+        <div class="tile-state">${esc(detail)}</div>
+      </article>
+    `;
+  }
+
+  function homeZone(group) {
+    const entities = featuredEntities(group.entities);
+    return `
+      <section class="home-zone home-zone-${esc(group.key)}">
+        <button class="zone-heading" data-view="area" data-area-id="${esc(group.areaId)}" type="button">
+          <span class="zone-heading-icon">${group.icon}</span><span>${esc(group.label)}</span>
+        </button>
+        <div class="tile-grid">${entities.length ? entities.map(displayTile).join("") : `<div class="zone-empty">Sem dispositivos selecionados</div>`}</div>
+      </section>
+    `;
+  }
+
+  function featuredMediaCard(entity) {
+    const attributes = entityAttributes(entity);
+    const title = attributes.media_title || entity.name || "Mídia";
+    const artist = attributes.media_artist || attributes.source || "Fonte não informada";
+    const volume = attributes.volume_level == null ? 0 : Math.round(Number(attributes.volume_level) * 100);
+    return `
+      <article class="feature-media ${isPlaying(entity) ? "is-playing" : ""}">
+        <div class="feature-media-head"><div class="feature-media-icon">${iconFor(entity)}</div><div><div class="feature-media-title">${esc(title)}</div><div class="feature-media-meta">${esc(entity.name)} · ${esc(artist)}</div></div></div>
+        <div class="feature-media-controls">
+          <button class="media-control" data-action="entity" data-id="${esc(entity.entity_id)}" data-command="stop" type="button">■</button>
+          <button class="media-control media-control-main" data-action="entity" data-id="${esc(entity.entity_id)}" data-command="play_pause" type="button">${isPlaying(entity) ? "Ⅱ" : "▶"}</button>
+          <button class="media-control" data-action="entity" data-id="${esc(entity.entity_id)}" data-command="mute" data-value="${attributes.is_volume_muted ? "false" : "true"}" type="button">${attributes.is_volume_muted ? "Som" : "Mudo"}</button>
+        </div>
+        <div class="feature-media-volume"><span>Vol.</span><input data-action="volume" data-id="${esc(entity.entity_id)}" type="range" min="0" max="100" value="${Number.isFinite(volume) ? volume : 0}" aria-label="Volume de ${esc(entity.name)}"><span>${volume}%</span></div>
+      </article>
+    `;
+  }
+
+  function energyPercent(bucket, numericValue) {
+    if (!Number.isFinite(Number(numericValue))) return 0;
+    const entity = (state.payload?.energy?.metrics?.[bucket] || []).find((item) => item.numeric_value === numericValue);
+    if (entityUnit(entity) === "%") return Math.max(0, Math.min(100, Math.round(Number(numericValue))));
+    const values = Object.values(state.payload?.energy?.metrics || {})
+      .flat()
+      .map((item) => Math.abs(Number(item.numeric_value)))
+      .filter(Number.isFinite);
+    const maximum = Math.max(...values, 1);
+    return Math.max(0, Math.min(100, Math.round(Math.abs(Number(numericValue)) / maximum * 100)));
+  }
+
+  function energyShowcase() {
+    const rows = [
+      ["Geração", "generation", "♧"],
+      ["Consumo", "consumption", "⌂"],
+      ["Bateria", "storage", "▣"],
+    ];
+    return `
+      <section class="energy-showcase">
+        <div class="showcase-heading"><span class="showcase-heading-icon">ϟ</span><span>Energia</span></div>
+        <div class="energy-showcase-rows">${rows.map(([label, bucket, icon]) => {
+          const reading = metricValue(bucket);
+          const percent = energyPercent(bucket, reading.value);
+          return `<div class="energy-showcase-row"><div class="energy-row-label"><span>${icon}</span><strong>${label}</strong><b>${esc(reading.value)} ${esc(reading.unit)}</b></div><div class="energy-bar"><span style="width:${percent}%"></span></div></div>`;
+        }).join("")}</div>
+      </section>
+    `;
+  }
+
+  function renderHomeDashboard() {
+    const groups = homeRoomGroups();
+    const media = allEntities().filter((entity) => entity.domain === "media_player").slice(0, 2);
+    const zones = groups.map(homeZone).join("");
+    $("#home-dashboard").innerHTML = `
+      <div class="home-zones">${zones || `<div class="home-empty">Nenhum cômodo principal encontrado.</div>`}</div>
+      <div class="home-lower">
+        <section class="media-showcase"><div class="showcase-heading"><span class="showcase-heading-icon">▷</span><span>Áudio e Vídeo</span></div><div class="media-showcase-grid">${media.length ? media.map(featuredMediaCard).join("") : `<div class="home-empty">Nenhum media player disponível.</div>`}</div></section>
+        ${energyShowcase()}
+      </div>
+    `;
+  }
+
   function renderSidebar() {
     const now = new Date();
     const hour = now.getHours();
@@ -353,18 +499,20 @@
 
   function renderQuickActions() {
     const scenes = (state.payload?.scenes || []).slice(0, 3);
+    const groups = homeRoomGroups();
     const actions = [
       { view: "all", icon: "⌂", label: "Casa" },
       ...scenes.map((scene) => ({ scene: scene.entity_id, icon: "✦", label: scene.name })),
+      ...groups.map((group) => ({ view: "area", areaId: group.areaId, icon: group.icon, label: group.label })),
       { view: "garage", icon: "▱", label: "Garagem" },
       { view: "energy", icon: "ϟ", label: "Energia" },
     ];
     $("#quick-actions").innerHTML = actions.map((action) => {
-      const selected = action.view === state.view && (!action.view || state.view === action.view);
+      const selected = action.view === state.view && (action.view !== "area" || action.areaId === state.areaId);
       if (action.scene) {
         return `<button class="quick-action" data-action="scene" data-id="${esc(action.scene)}" type="button"><span>${action.icon}</span>${esc(action.label)}</button>`;
       }
-      return `<button class="quick-action ${selected ? "is-active" : ""}" data-view="${action.view}" type="button"><span>${action.icon}</span>${esc(action.label)}</button>`;
+      return `<button class="quick-action ${selected ? "is-active" : ""}" data-view="${action.view}" data-area-id="${esc(action.areaId || "")}" type="button"><span>${action.icon}</span>${esc(action.label)}</button>`;
     }).join("");
   }
 
@@ -450,6 +598,20 @@
   }
 
   function renderRoom() {
+    if (state.view === "all") {
+      $("#page-title").textContent = state.payload?.home?.name || "Casa";
+      $("#page-subtitle").textContent = "Seu ambiente, em um só lugar.";
+      $("#home-dashboard").classList.remove("is-hidden");
+      $("#overview-strip").classList.add("is-hidden");
+      $("#scene-panel").classList.add("is-hidden");
+      $("#room-grid").classList.add("is-hidden");
+      renderHomeDashboard();
+      return;
+    }
+    $("#home-dashboard").classList.add("is-hidden");
+    $("#overview-strip").classList.remove("is-hidden");
+    $("#scene-panel").classList.remove("is-hidden");
+    $("#room-grid").classList.remove("is-hidden");
     const entities = roomEntities(currentEntities());
     $("#page-title").textContent = state.view === "area" ? (findArea(state.areaId)?.name || "Cômodo") : (state.payload?.home?.name || "Casa");
     $("#page-subtitle").textContent = state.view === "area" ? "Controles e dispositivos deste cômodo." : "Seu ambiente, em um só lugar.";

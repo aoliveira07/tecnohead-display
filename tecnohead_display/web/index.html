@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <meta name="theme-color" content="#161b20">
     <title>Tecnohead Display</title>
-    <link rel="stylesheet" href="static/style.css?v=0.3.0">
+    <link rel="stylesheet" href="static/style.css?v=0.4.0">
   </head>
   <body>
     <div class="ambient ambient-one"></div>
@@ -32,11 +32,7 @@
         </div>
 
         <div class="rail-scroll">
-          <button class="rail-button is-active" data-view="all" type="button">
-            <span class="rail-icon">⌂</span><span>Casa</span>
-          </button>
-          <div class="rail-label">CÔMODOS</div>
-          <div id="room-list"></div>
+          <div id="room-list" class="legacy-room-list" aria-hidden="true"></div>
         </div>
 
         <div class="rail-bottom">
@@ -66,9 +62,10 @@
         </header>
 
         <section class="view-section" id="room-view">
-          <div class="overview-strip" id="overview-strip"></div>
-          <div class="scene-panel" id="scene-panel"></div>
-          <div class="dashboard-grid" id="room-grid"></div>
+          <div class="home-dashboard" id="home-dashboard"></div>
+          <div class="overview-strip is-hidden" id="overview-strip"></div>
+          <div class="scene-panel is-hidden" id="scene-panel"></div>
+          <div class="dashboard-grid is-hidden" id="room-grid"></div>
         </section>
 
         <section class="view-section is-hidden" id="energy-view">
@@ -111,7 +108,7 @@
     </section>
 
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
-    <script src="static/dashboard.js?v=0.3.0" defer></script>
+    <script src="static/dashboard.js?v=0.4.0" defer></script>
   </body>
 </html>
 

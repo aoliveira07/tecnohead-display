@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.4.0
+
+- Recria a home do display com a composição aprovada: contexto lateral, cômodos em blocos, áudio/vídeo, energia e navegação inferior.
+- Adiciona cartões claros para dispositivos ativos e cartões grafite para dispositivos desligados, com anéis de nível para brilho e volume.
+
 ## 0.3.0
 
 - Adiciona sincronização somente leitura de um álbum do Immich para cache persistente no Home Assistant.
