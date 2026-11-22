@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.6.5
+
+- Exibe a foto inteira no porta-retrato, sem corte, usando a própria imagem desfocada para preencher as laterais.
+- Mantém o nome do arquivo fora da interface visível.
+
 ## 0.6.4
 
 - Remove o nome do arquivo do porta-retrato.

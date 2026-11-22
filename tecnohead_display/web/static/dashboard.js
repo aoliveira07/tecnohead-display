@@ -22,6 +22,7 @@
   const roomList = $("#room-list");
   const photoFrame = $("#photo-frame");
   const photoImage = $("#photo-frame-image");
+  const photoBackdrop = $(".photo-frame-backdrop");
 
   const ICONS = {
     light: "light",
@@ -215,6 +216,7 @@
     const cacheBust = photo.updated_at ? `?v=${encodeURIComponent(photo.updated_at)}` : "";
     photoImage.src = `${photo.url}${cacheBust}`;
     photoImage.alt = photo.name || "Foto do álbum Tecnohead Display";
+    photoBackdrop.style.backgroundImage = "url(" + JSON.stringify(photo.url + cacheBust) + ")";
   }
 
   function showPhotoFrame() {
@@ -249,6 +251,7 @@
     state.photoFrameVisible = false;
     clearPhotoTimer();
     photoImage.removeAttribute("src");
+    photoBackdrop.style.removeProperty("background-image");
     photoFrame.classList.add("is-hidden");
     photoFrame.setAttribute("aria-hidden", "true");
     document.body.classList.remove("photo-frame-open");
