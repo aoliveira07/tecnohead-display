@@ -12,10 +12,16 @@ from pathlib import Path
 from urllib.parse import quote
 
 import httpx
+from PIL import Image, ImageEnhance, ImageFilter, ImageOps
 
 
 class ImmichError(RuntimeError):
     """Raised when Immich cannot answer a read-only photo request."""
+
+
+NORMALIZED_WIDTH = 1920
+NORMALIZED_HEIGHT = 1080
+PHOTO_FORMAT_VERSION = 1
 
 
 @dataclass(slots=True)
@@ -178,9 +184,42 @@ class ImmichPhotoFrame:
             raise ImmichError(f"Falha ao baixar uma foto do Immich: {exc}") from exc
         if response.is_error:
             raise ImmichError(f"Immich não entregou a miniatura (HTTP {response.status_code})")
-        temporary = destination.with_suffix(destination.suffix + ".part")
-        temporary.write_bytes(response.content)
-        temporary.replace(destination)
+        temporary = destination.with_suffix(destination.suffix + ".source")
+        try:
+            temporary.write_bytes(response.content)
+            await asyncio.to_thread(self._normalize_image, temporary, destination)
+        except (OSError, ValueError) as exc:
+            raise ImmichError(f"Não foi possível normalizar a foto do Immich: {exc}") from exc
+        finally:
+            temporary.unlink(missing_ok=True)
+
+    @staticmethod
+    def _normalize_image(source: Path, destination: Path) -> None:
+        """Create a 1920x1080 landscape image while keeping the whole photo."""
+
+        with Image.open(source) as opened:
+            image = ImageOps.exif_transpose(opened).convert("RGB")
+
+        target = (NORMALIZED_WIDTH, NORMALIZED_HEIGHT)
+        background = ImageOps.fit(
+            image,
+            target,
+            method=Image.Resampling.LANCZOS,
+            centering=(0.5, 0.5),
+        )
+        background = ImageEnhance.Brightness(
+            background.filter(ImageFilter.GaussianBlur(radius=28))
+        ).enhance(0.62)
+
+        canvas = background.convert("RGB")
+        foreground = image.copy()
+        foreground.thumbnail(target, Image.Resampling.LANCZOS)
+        position = (
+            (NORMALIZED_WIDTH - foreground.width) // 2,
+            (NORMALIZED_HEIGHT - foreground.height) // 2,
+        )
+        canvas.paste(foreground, position)
+        canvas.save(destination, format="JPEG", quality=92, optimize=True, progressive=True)
 
     async def sync(self, force: bool = False) -> dict[str, object]:
         async with self._lock:
@@ -202,13 +241,14 @@ class ImmichPhotoFrame:
                     asset_id = str(asset.get("id") or "").strip()
                     if not asset_id:
                         continue
-                    filename = f"{asset_id}{self._extension(asset)}"
+                    filename = f"{asset_id}-{NORMALIZED_WIDTH}x{NORMALIZED_HEIGHT}.jpg"
                     destination = self.cache_dir / filename
                     prior = previous.get(asset_id, {})
                     changed = (
                         not destination.exists()
                         or prior.get("updated_at") != asset.get("updatedAt")
                         or prior.get("checksum") != asset.get("checksum")
+                        or prior.get("format_version") != PHOTO_FORMAT_VERSION
                     )
                     if changed:
                         await self._download_preview(asset_id, destination)
@@ -221,10 +261,14 @@ class ImmichPhotoFrame:
                             "created_at": asset.get("fileCreatedAt") or asset.get("localDateTime"),
                             "updated_at": asset.get("updatedAt"),
                             "checksum": asset.get("checksum"),
+                            "format_version": PHOTO_FORMAT_VERSION,
+                            "width": NORMALIZED_WIDTH,
+                            "height": NORMALIZED_HEIGHT,
                         }
                     )
                 manifest = {
                     "photos": photos,
+                    "format_version": PHOTO_FORMAT_VERSION,
                     "synced_at": datetime.now(UTC).isoformat(),
                     "error": None,
                 }
@@ -248,6 +292,8 @@ class ImmichPhotoFrame:
         }
 
     def _sync_due(self, manifest: dict[str, object]) -> bool:
+        if manifest.get("format_version") != PHOTO_FORMAT_VERSION:
+            return True
         value = manifest.get("synced_at")
         if not isinstance(value, str) or not value:
             return True

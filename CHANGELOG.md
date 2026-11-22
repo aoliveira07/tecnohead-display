@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.6.6
+
+- Normaliza as fotos do Immich para o canvas paisagem real do quiosque: 1920×1080.
+- Corrige a orientação EXIF, preserva a foto inteira e cria preenchimento desfocado nas áreas restantes.
+
 ## 0.6.5
 
 - Exibe a foto inteira no porta-retrato, sem corte, usando a própria imagem desfocada para preencher as laterais.

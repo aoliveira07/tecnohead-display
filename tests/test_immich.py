@@ -1,5 +1,7 @@
 import asyncio
 
+from PIL import Image
+
 from tecnohead_display.app.immich import ImmichPhotoFrame
 
 
@@ -34,3 +36,15 @@ def test_photo_path_rejects_traversal(tmp_path):
 
     assert frame.photo_path("safe.jpg") == (tmp_path / "safe.jpg").resolve()
     assert frame.photo_path("../safe.jpg") is None
+
+
+def test_photo_normalization_creates_landscape_canvas_without_cropping(tmp_path):
+    source = tmp_path / "portrait.jpg"
+    destination = tmp_path / "normalized.jpg"
+    Image.new("RGB", (900, 1600), (245, 190, 80)).save(source)
+
+    ImmichPhotoFrame._normalize_image(source, destination)
+
+    with Image.open(destination) as normalized:
+        assert normalized.size == (1920, 1080)
+        assert normalized.mode == "RGB"

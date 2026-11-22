@@ -17,6 +17,7 @@ Este projeto é separado do `tecnohead-multimidia`. Ele não importa código, n�
 - backend intermediário: o token fica no add-on e nunca vai para o navegador;
 - polling configurável para manter a tela atualizada.
 - sincronização somente leitura de um álbum do Immich para um cache persistente no Home Assistant;
+- normalização automática das fotos sincronizadas para o canvas paisagem 1920×1080 do quiosque;
 - porta-retrato digital após período configurável sem interação, retornando ao painel com um toque.
 - editor de layout persistente para escolher áreas, categorias de dispositivos e ordem por cômodo;
 - cartão da garagem preparado para dados reais do Volvo XC40/EX40, sem preencher leituras ausentes.

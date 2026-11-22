@@ -308,7 +308,7 @@ async def build_dashboard(
             garage.append(entity)
 
     return {
-        "app": {"name": "Tecnohead Display", "version": "0.6.5"},
+        "app": {"name": "Tecnohead Display", "version": "0.6.6"},
         "home": {"name": str(config.get("location_name") or "Casa")},
         "areas": areas,
         "scenes": scenes,
