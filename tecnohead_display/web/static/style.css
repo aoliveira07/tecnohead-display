@@ -30,7 +30,8 @@ body {
 }
 
 button, input, select { font: inherit; }
-button { color: inherit; }
+button { color: inherit; touch-action: manipulation; user-select: none; -webkit-tap-highlight-color: transparent; }
+input, select { touch-action: manipulation; }
 
 .ambient {
   position: fixed;
@@ -150,6 +151,7 @@ h2 { margin-top: 7px; font-size: clamp(24px, 2.7vw, 37px); letter-spacing: -0.05
 .icon-button:hover { transform: translateY(-1px); background: var(--orange-soft); }
 .icon-button.is-loading { animation: spin 900ms linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
+@keyframes pulse { from { opacity: 0.60; } to { opacity: 0.95; } }
 
 .view-section { height: calc(100% - 122px); overflow: auto; padding: 0 34px 34px; scrollbar-width: thin; scrollbar-color: rgba(255, 176, 117, 0.40) transparent; }
 .view-section.is-hidden { display: none; }
@@ -180,7 +182,19 @@ h2 { margin-top: 7px; font-size: clamp(24px, 2.7vw, 37px); letter-spacing: -0.05
 .scene-button .scene-type { display: block; margin-top: 2px; color: var(--quiet); font-size: 9px; }
 
 .dashboard-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; align-items: stretch; }
-.card { min-width: 0; min-height: 154px; padding: 18px; overflow: hidden; border-radius: var(--radius-lg); background: var(--glass); }
+.card {
+  min-width: 0;
+  min-height: 154px;
+  padding: 18px;
+  overflow: hidden;
+  border-radius: var(--radius-lg);
+  background: var(--glass);
+  /* Cards are numerous on a touch panel. Keep the glass effect on the shell,
+     but avoid one GPU backdrop surface per entity card. */
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.20);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
 .card.card-wide { grid-column: span 2; }
 .card.card-tall { grid-row: span 2; }
 .card-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
@@ -197,6 +211,8 @@ h2 { margin-top: 7px; font-size: clamp(24px, 2.7vw, 37px); letter-spacing: -0.05
 .status-dot.is-playing { background: var(--green); box-shadow: 0 0 0 4px rgba(167, 223, 177, 0.11); }
 .status-label { color: var(--muted); font-size: 10px; }
 .toggle-button { margin-left: auto; min-width: 74px; min-height: 42px; padding: 0 13px; border: 1px solid var(--line); border-radius: 13px; color: var(--muted); cursor: pointer; background: rgba(255, 255, 255, 0.06); }
+.toggle-button:disabled, .small-action:disabled, .scene-button:disabled { cursor: wait; opacity: 0.60; }
+.is-pending { animation: pulse 850ms ease-in-out infinite alternate; }
 .toggle-button.is-on { border-color: rgba(255, 183, 119, 0.32); color: #26120d; background: linear-gradient(135deg, #ffd09a, #ff8a45); }
 .media-controls { display: flex; align-items: center; gap: 8px; margin-top: 16px; }
 .media-controls .small-action { min-width: 44px; padding: 0 11px; }

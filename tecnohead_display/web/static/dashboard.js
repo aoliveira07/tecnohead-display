@@ -20,6 +20,22 @@
     energy: "ϟ",
   };
 
+  // Room pages are meant for touch control, not for dumping every diagnostic
+  // entity from Home Assistant into the DOM. Sensors remain available to the
+  // dedicated energy/garage views, while room pages stay quick to paint.
+  const ROOM_DOMAINS = new Set([
+    "light",
+    "switch",
+    "fan",
+    "input_boolean",
+    "cover",
+    "lock",
+    "button",
+    "media_player",
+    "climate",
+    "vacuum",
+  ]);
+
   const esc = (value) => String(value ?? "")
     .replaceAll("&", "&amp;")
     .replaceAll("<", "&lt;")
@@ -130,6 +146,13 @@
     return allEntities();
   }
 
+  function roomEntities(entities) {
+    return entities.filter((entity) => (
+      ROOM_DOMAINS.has(entity.domain)
+      && entityAttributes(entity).entity_category !== "diagnostic"
+    ));
+  }
+
   function renderRoomList() {
     const areas = state.payload?.areas || [];
     roomList.innerHTML = areas.map((area) => `
@@ -148,12 +171,16 @@
 
   function renderOverview() {
     const summary = state.payload?.summary || {};
-    const entities = currentEntities();
+    const discovered = currentEntities();
+    const entities = roomEntities(discovered);
     const active = entities.filter(isOn).length;
     const media = entities.filter((entity) => entity.domain === "media_player").length;
     const areaCount = state.view === "area" ? 1 : summary.areas || 0;
+    const detail = discovered.length > entities.length
+      ? `${discovered.length} entidades descobertas`
+      : "Comandos disponíveis";
     $("#overview-strip").innerHTML = `
-      <div class="overview-card"><div class="label">Dispositivos</div><div class="value">${entities.length}</div><div class="detail">Nesta seleção</div></div>
+      <div class="overview-card"><div class="label">Controles</div><div class="value">${entities.length}</div><div class="detail">${detail}</div></div>
       <div class="overview-card"><div class="label">Ativos agora</div><div class="value">${active}</div><div class="detail">Comandos disponíveis</div></div>
       <div class="overview-card"><div class="label">Cômodos</div><div class="value">${areaCount}</div><div class="detail">Descobertos no Home Assistant · ${media} mídia</div></div>
     `;
@@ -257,7 +284,7 @@
   }
 
   function renderRoom() {
-    const entities = currentEntities().filter((entity) => !["scene", "script"].includes(entity.domain));
+    const entities = roomEntities(currentEntities());
     $("#page-title").textContent = state.view === "area" ? (findArea(state.areaId)?.name || "Cômodo") : (state.payload?.home?.name || "Casa");
     $("#page-subtitle").textContent = state.view === "area" ? "Controles e dispositivos deste cômodo." : "Seu ambiente, em um só lugar.";
     renderOverview();
@@ -343,7 +370,11 @@
     }
   }
 
-  async function sendAction(entityId, command, value) {
+  async function sendAction(entityId, command, value, sourceButton = null) {
+    if (sourceButton) {
+      sourceButton.disabled = true;
+      sourceButton.classList.add("is-pending");
+    }
     try {
       const response = await fetch("api/entities/action", {
         method: "POST",
@@ -353,9 +384,16 @@
       const body = await response.json();
       if (!response.ok) throw new Error(body.detail || "Ação recusada");
       toast("Comando enviado");
-      await load(false);
+      // Let the touch action finish immediately. The authoritative state is
+      // refreshed shortly after, without holding the button interaction open.
+      window.setTimeout(() => load(false), 350);
     } catch (error) {
       toast(error.message || "Não foi possível enviar o comando");
+    } finally {
+      if (sourceButton?.isConnected) {
+        sourceButton.disabled = false;
+        sourceButton.classList.remove("is-pending");
+      }
     }
   }
 
@@ -369,7 +407,7 @@
       const body = await response.json();
       if (!response.ok) throw new Error(body.detail || "Cena recusada");
       toast("Cena ativada");
-      await load(false);
+      window.setTimeout(() => load(false), 350);
     } catch (error) {
       toast(error.message || "Não foi possível ativar a cena");
     }
@@ -390,7 +428,7 @@
     }
     const entityButton = event.target.closest('[data-action="entity"]');
     if (entityButton) {
-      sendAction(entityButton.dataset.id, entityButton.dataset.command, entityButton.dataset.value);
+      sendAction(entityButton.dataset.id, entityButton.dataset.command, entityButton.dataset.value, entityButton);
     }
   });
 
