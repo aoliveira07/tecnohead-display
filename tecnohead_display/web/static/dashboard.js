@@ -22,18 +22,40 @@
   const photoName = $("#photo-frame-name");
 
   const ICONS = {
-    light: "✦",
-    switch: "◉",
-    fan: "◌",
-    cover: "▱",
-    climate: "⌁",
-    sensor: "·",
-    binary_sensor: "◌",
-    media_player: "♫",
-    scene: "✧",
-    script: "⌘",
-    garage: "▰",
-    energy: "ϟ",
+    light: "light",
+    switch: "switch",
+    fan: "fan",
+    cover: "cover",
+    climate: "climate",
+    sensor: "sensor",
+    binary_sensor: "sensor",
+    media_player: "media",
+    scene: "scene",
+    script: "script",
+    garage: "garage",
+    energy: "energy",
+  };
+
+  const ICON_PATHS = {
+    light: '<path d="M9 17.5h6M10 20.5h4M8.6 14.5c-1.3-1.1-2.1-2.7-2.1-4.6a5.5 5.5 0 0 1 11 0c0 1.9-.8 3.5-2.1 4.6-.8.7-1.2 1.3-1.3 2.1h-4.2c-.1-.8-.5-1.4-1.3-2.1Z"/>',
+    sink: '<path d="M4 11.5h16M6 11.5V8a2 2 0 0 1 4 0v1M10 9h8M4 11.5v1.5a5 5 0 0 0 5 5h6a5 5 0 0 0 5-5v-1.5M8 20h8"/>',
+    hood: '<path d="M6 5h12v4H6zM4 9h16l1.5 8H2.5L4 9ZM8 20h8"/>',
+    fan: '<circle cx="12" cy="12" r="2.2"/><path d="M12 9.5C9 4 14 2.7 15.5 5.4 16.7 7.6 14 10 12 9.5ZM14.5 12c5.5-3 6.8 2 4.1 3.5-2.2 1.2-4.6-1.5-4.1-3.5ZM12 14.5c3 5.5-2 6.8-3.5 4.1C7.3 16.4 10 13.9 12 14.5Z"/>',
+    cover: '<path d="M4 4h16v16H4zM7 8h10M7 12h10M7 16h10"/>',
+    climate: '<path d="M8 4v16M5 7l3 3 3-3M5 17l3-3 3 3M16 4v16M13 7l3 3 3-3M13 17l3-3 3 3"/>',
+    sensor: '<circle cx="12" cy="12" r="3"/><path d="M5.6 5.6a9 9 0 0 0 0 12.8M18.4 5.6a9 9 0 0 1 0 12.8"/>',
+    media: '<path d="M8 5v14l11-7L8 5Z"/><path d="M4 5v14"/>',
+    tv: '<rect x="3" y="5" width="18" height="12" rx="1.5"/><path d="M8 21h8M12 17v4"/>',
+    car: '<path d="m5 16 1.5-5h11L19 16M4 16h16v4H4zM7 20v1M17 20v1M7.5 15h.1M16.4 15h.1"/>',
+    energy: '<path d="m13 2-8 12h6l-1 8 8-12h-6l1-8Z"/>',
+    outdoor: '<path d="M12 21V9M12 11 7 6M12 14l5-5M8 21h8M5 8c1.4-2.2 3.5-3.2 6-3M19 8c-1.4-2.2-3.5-3.2-6-3"/>',
+    kitchen: '<path d="M5 4v7M8 4v7M11 4v7M8 11v9M17 4v16M17 4c2 1.4 2 4 0 5"/>',
+    garage: '<path d="M4 20V8l8-5 8 5v12M7 20v-6h10v6M9 11h6"/>',
+    switch: '<rect x="5" y="3" width="14" height="18" rx="2"/><path d="M12 7v5M9 16h6"/>',
+    lock: '<rect x="5" y="10" width="14" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3M12 14v2"/>',
+    button: '<circle cx="12" cy="12" r="7"/><path d="m12 8 2.5 4-2.5 4-2.5-4L12 8Z"/>',
+    scene: '<path d="m12 3 1.5 5.5L19 10l-5.5 1.5L12 17l-1.5-5.5L5 10l5.5-1.5L12 3ZM19 16l.6 2.4L22 19l-2.4.6L19 22l-.6-2.4L16 19l2.4-.6L19 16Z"/>',
+    script: '<path d="M5 4h14v16H5zM8 8h8M8 12h8M8 16h5"/>',
   };
 
   // Room pages are meant for touch control, not for dumping every diagnostic
@@ -62,22 +84,61 @@
   const entityAttributes = (entity) => entity?.attributes || {};
   const entityUnit = (entity) => entityAttributes(entity).unit_of_measurement || "";
 
+  function svgIcon(kind, className = "") {
+    const path = ICON_PATHS[kind] || ICON_PATHS.sensor;
+    return `<svg class="icon-svg ${className}" viewBox="0 0 24 24" aria-hidden="true" focusable="false">${path}</svg>`;
+  }
+
+  function roomIcon(key) {
+    return svgIcon(key === "cozinha" ? "kitchen" : key === "externo" ? "outdoor" : "garage");
+  }
+
+  function friendlyEntityName(entity) {
+    const raw = String(entity?.name || entity?.entity_id || "Dispositivo");
+    const lower = raw.toLowerCase();
+    if (lower.includes("charge control") || lower.includes("carga ring")) return "Carregamento";
+    if (lower.includes("availability") || lower.includes("available")) return "Disponibilidade";
+    if (lower.includes("reset")) return "Reset";
+    if (lower.includes("unlock")) return "Destravar";
+    if (lower.includes("pia")) return "Pia";
+    if (lower.includes("coifa")) return "Coifa";
+    if (lower.includes("bancada")) return "Bancada";
+    if (lower.includes("cristaleira")) return "Cristaleira";
+    if (lower.includes("led")) return "Led";
+    if (lower.includes("árvore") || lower.includes("arvore")) return "Árvore entrada";
+
+    let name = raw.replace(/^charger\s+/i, "");
+    const area = String(entity?.area_name || "").trim();
+    if (area) name = name.replace(new RegExp(`\\s+${area.replace(/[.*+?^${}()|[\\]\\]/g, "\\\\$&")}$`, "i"), "");
+    return name.trim() || raw;
+  }
+
+  function spotifyLogo() {
+    return '<svg class="spotify-logo" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M5.1 9.2c4.3-1.3 9.6-.9 13.8 1.1M6.3 13c3.4-1 7.4-.7 10.7.9M7.5 16.6c2.5-.6 5.1-.4 7.4.7"/></svg>';
+  }
+
   function iconFor(entity) {
     const domain = entity?.domain || "sensor";
     const custom = String(entity?.icon || "");
-    if (custom.includes("lightbulb")) return "✦";
-    if (custom.includes("speaker") || custom.includes("music")) return "♫";
-    return ICONS[domain] || "·";
+    const text = `${entity?.name || ""} ${entity?.entity_id || ""} ${custom}`.toLowerCase();
+    if (text.includes("pia")) return svgIcon("sink");
+    if (text.includes("coifa") || text.includes("hood")) return svgIcon("hood");
+    if (text.includes("tv") || text.includes("televis")) return svgIcon("tv");
+    if (text.includes("charger") || text.includes("carga") || text.includes("carreg") || text.includes("volvo")) return svgIcon("car");
+    if (text.includes("portão") || text.includes("portao") || text.includes("gate")) return svgIcon("cover");
+    if (custom.includes("lightbulb") || domain === "light") return svgIcon("light");
+    if (custom.includes("speaker") || custom.includes("music")) return svgIcon("media");
+    return svgIcon(ICONS[domain] || "sensor");
   }
 
   function areaIcon(area) {
     const text = `${area?.name || ""} ${area?.id || ""}`.toLowerCase();
-    if (text.includes("coz")) return "⌂";
-    if (text.includes("extern") || text.includes("pisc")) return "◒";
-    if (text.includes("cinema") || text.includes("tv")) return "▣";
-    if (text.includes("escrit")) return "⌁";
-    if (text.includes("quarto") || text.includes("sala")) return "◌";
-    return "⌂";
+    if (text.includes("coz")) return roomIcon("cozinha");
+    if (text.includes("extern") || text.includes("pisc")) return roomIcon("externo");
+    if (text.includes("cinema") || text.includes("tv")) return svgIcon("tv");
+    if (text.includes("escrit")) return svgIcon("climate");
+    if (text.includes("quarto") || text.includes("sala")) return svgIcon("light");
+    return svgIcon("kitchen");
   }
 
   function humanState(entity) {
@@ -301,7 +362,7 @@
         groups.set(key, {
           key,
           label: key === "cozinha" ? "Cozinha" : key === "externo" ? "Externo" : "Garagem",
-          icon: key === "cozinha" ? "⌂" : key === "externo" ? "♧" : "▱",
+          icon: roomIcon(key),
           areaId: area.id,
           entities: [],
         });
@@ -318,7 +379,7 @@
       }));
   }
 
-  function featuredEntities(entities, limit = 4) {
+  function featuredEntities(entities, limit = 4, groupKey = "") {
     const order = {
       light: 1,
       switch: 2,
@@ -330,9 +391,20 @@
       climate: 8,
       button: 9,
     };
+    const preferred = {
+      cozinha: ["pia", "coifa", "led", "bancada", "cristaleira", "jardim"],
+      externo: ["som externo", "tv piscina", "piscina", "som", "tv", "entrada", "depósito", "deposito", "árvore", "arvore"],
+      garagem: ["flap", "portão", "portao", "gate", "charge", "charger", "carga", "carreg", "volvo", "garage", "garagem"],
+    }[groupKey] || [];
+    const preferenceScore = (entity) => {
+      const text = `${entity?.name || ""} ${entity?.entity_id || ""}`.toLowerCase();
+      const match = preferred.findIndex((term) => text.includes(term));
+      return match === -1 ? 100 : match;
+    };
     return roomEntities(entities)
       .filter((entity) => entityAttributes(entity).entity_category !== "diagnostic")
-      .sort((left, right) => (order[left.domain] || 99) - (order[right.domain] || 99))
+      .sort((left, right) => preferenceScore(left) - preferenceScore(right)
+        || (order[left.domain] || 99) - (order[right.domain] || 99))
       .slice(0, limit);
   }
 
@@ -351,14 +423,14 @@
     return `
       <article class="display-tile ${isOn(entity) ? "is-active" : ""} ${clickable ? "is-touchable" : ""}" ${tileAction(entity)}>
         <div class="tile-top"><div class="tile-icon">${iconFor(entity)}</div>${levelRing(entity)}</div>
-        <div class="tile-name" title="${esc(entity.name)}">${esc(entity.name)}</div>
+        <div class="tile-name" title="${esc(entity.name)}">${esc(friendlyEntityName(entity))}</div>
         <div class="tile-state">${esc(detail)}</div>
       </article>
     `;
   }
 
   function homeZone(group) {
-    const entities = featuredEntities(group.entities);
+    const entities = featuredEntities(group.entities, 4, group.key);
     return `
       <section class="home-zone home-zone-${esc(group.key)}">
         <button class="zone-heading" data-view="area" data-area-id="${esc(group.areaId)}" type="button">
@@ -387,6 +459,64 @@
     `;
   }
 
+  function formatMediaTime(value) {
+    const seconds = Number(value);
+    if (!Number.isFinite(seconds) || seconds < 0) return "—";
+    const minutes = Math.floor(seconds / 60);
+    return `${minutes}:${String(Math.floor(seconds % 60)).padStart(2, "0")}`;
+  }
+
+  function mediaCommandButton(entity, command, label, value = null, extraClass = "") {
+    if (!entity) return `<button class="media-control ${extraClass} is-disabled" type="button" disabled aria-label="${esc(label)}">${label}</button>`;
+    const valueAttribute = value === null ? "" : ` data-value="${esc(value)}"`;
+    return `<button class="media-control ${extraClass}" data-action="entity" data-id="${esc(entity.entity_id)}" data-command="${esc(command)}"${valueAttribute} type="button" aria-label="${esc(label)}">${label}</button>`;
+  }
+
+  function spotifyMediaCard(entity) {
+    const connected = Boolean(entity);
+    const attributes = entityAttributes(entity);
+    const title = connected ? (attributes.media_title || "Playlist Festa") : "Playlist Festa";
+    const meta = connected ? (attributes.media_artist || attributes.source || "Spotify") : "Spotify ainda não conectado";
+    const duration = connected ? formatMediaTime(attributes.media_duration) : "3:56";
+    const position = connected ? formatMediaTime(attributes.media_position) : "1:24";
+    const percent = connected && Number.isFinite(Number(attributes.media_duration)) && Number(attributes.media_duration) > 0
+      ? Math.max(0, Math.min(100, Number(attributes.media_position || 0) / Number(attributes.media_duration) * 100))
+      : 35;
+    const mutedValue = attributes.is_volume_muted ? "false" : "true";
+    return `
+      <article class="feature-media spotify-card ${connected && isPlaying(entity) ? "is-playing" : ""} ${connected ? "" : "is-preview"}">
+        <div class="spotify-card-art">
+          <div class="spotify-art-glow"></div>
+          <div class="spotify-art-top"><span class="spotify-mark">${spotifyLogo()}</span><span class="spotify-platform">Spotify</span><button class="media-heart" type="button" disabled aria-label="Favorito">♡</button></div>
+          <div class="spotify-art-copy"><strong>${esc(title)}</strong><span>${esc(meta)}</span></div>
+        </div>
+        <div class="spotify-progress"><div class="progress-times"><span>${esc(position)}</span><span>${esc(duration)}</span></div><div class="progress-track"><span style="width:${percent}%"></span></div></div>
+        <div class="feature-media-controls">
+          ${mediaCommandButton(entity, "stop", "■")}
+          ${mediaCommandButton(entity, "play_pause", connected && isPlaying(entity) ? "Ⅱ" : "▶", null, "media-control-main")}
+          ${mediaCommandButton(entity, "mute", attributes.is_volume_muted ? "Som" : "Mudo", mutedValue)}
+        </div>
+        ${connected ? `<div class="feature-media-volume"><span>Vol.</span><input data-action="volume" data-id="${esc(entity.entity_id)}" type="range" min="0" max="100" value="${Math.round(Number(attributes.volume_level || 0) * 100)}" aria-label="Volume de ${esc(entity.name)}"><span>${Math.round(Number(attributes.volume_level || 0) * 100)}%</span></div>` : `<div class="media-connection-note">Conectar Spotify no Home Assistant</div>`}
+      </article>
+    `;
+  }
+
+  function videoMediaCard(entity) {
+    const connected = Boolean(entity);
+    const title = connected ? friendlyEntityName(entity) : "TV Piscina";
+    const stateLabel = connected ? humanState(entity) : "Aguardando entidade";
+    return `
+      <article class="video-feature ${connected && isOn(entity) ? "is-active" : ""}">
+        <div class="video-art">
+          <div class="video-art-sky"></div><div class="video-art-water"></div><div class="video-art-lights"></div>
+          <div class="video-art-toolbar"><span>${svgIcon("tv")}</span><button type="button" disabled aria-label="Tela cheia">⤢</button></div>
+          <div class="video-art-caption"><span class="video-art-icon">${svgIcon("tv")}</span><div><strong>${esc(title)}</strong><small>${esc(stateLabel)}</small></div></div>
+          ${connected ? mediaCommandButton(entity, "play_pause", isPlaying(entity) ? "Ⅱ" : "▶", null, "video-play") : ""}
+        </div>
+      </article>
+    `;
+  }
+
   function energyPercent(bucket, numericValue) {
     if (!Number.isFinite(Number(numericValue))) return 0;
     const entity = (state.payload?.energy?.metrics?.[bucket] || []).find((item) => item.numeric_value === numericValue);
@@ -401,17 +531,17 @@
 
   function energyShowcase() {
     const rows = [
-      ["Geração", "generation", "♧"],
-      ["Consumo", "consumption", "⌂"],
-      ["Bateria", "storage", "▣"],
+      ["Geração", "generation", "outdoor"],
+      ["Consumo", "consumption", "kitchen"],
+      ["Bateria", "storage", "energy"],
     ];
     return `
       <section class="energy-showcase">
-        <div class="showcase-heading"><span class="showcase-heading-icon">ϟ</span><span>Energia</span></div>
+        <div class="showcase-heading"><span class="showcase-heading-icon">${svgIcon("energy")}</span><span>Energia</span></div>
         <div class="energy-showcase-rows">${rows.map(([label, bucket, icon]) => {
           const reading = metricValue(bucket);
           const percent = energyPercent(bucket, reading.value);
-          return `<div class="energy-showcase-row"><div class="energy-row-label"><span>${icon}</span><strong>${label}</strong><b>${esc(reading.value)} ${esc(reading.unit)}</b></div><div class="energy-bar"><span style="width:${percent}%"></span></div></div>`;
+          return `<div class="energy-showcase-row"><div class="energy-row-label"><span>${svgIcon(icon)}</span><strong>${label}</strong><b>${esc(reading.value)} ${esc(reading.unit)}</b></div><div class="energy-bar"><span style="width:${percent}%"></span></div></div>`;
         }).join("")}</div>
       </section>
     `;
@@ -419,12 +549,14 @@
 
   function renderHomeDashboard() {
     const groups = homeRoomGroups();
-    const media = allEntities().filter((entity) => entity.domain === "media_player").slice(0, 2);
+    const media = allEntities().filter((entity) => entity.domain === "media_player");
+    const spotify = media.find((entity) => `${entity.entity_id} ${entity.name} ${entityAttributes(entity).source || ""}`.toLowerCase().includes("spotify"));
+    const video = media.filter((entity) => entity !== spotify).find((entity) => `${entity.name} ${entity.entity_id}`.toLowerCase().match(/pisc|extern|tv|televis/)) || media.find((entity) => entity !== spotify);
     const zones = groups.map(homeZone).join("");
     $("#home-dashboard").innerHTML = `
       <div class="home-zones">${zones || `<div class="home-empty">Nenhum cômodo principal encontrado.</div>`}</div>
       <div class="home-lower">
-        <section class="media-showcase"><div class="showcase-heading"><span class="showcase-heading-icon">▷</span><span>Áudio e Vídeo</span></div><div class="media-showcase-grid">${media.length ? media.map(featuredMediaCard).join("") : `<div class="home-empty">Nenhum media player disponível.</div>`}</div></section>
+        <section class="media-showcase"><div class="showcase-heading"><span class="showcase-heading-icon">${svgIcon("media")}</span><span>Áudio e Vídeo</span></div><div class="media-showcase-grid media-showcase-visual">${spotifyMediaCard(spotify)}${videoMediaCard(video)}</div></section>
         ${energyShowcase()}
       </div>
     `;

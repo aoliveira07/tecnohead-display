@@ -779,3 +779,73 @@ body { background: #20252b; }
   .quick-actions { right: 14px; bottom: 11px; left: 14px; }
 }
 
+/* Layout detail pass: closer to the approved Apple/HomeKit-style reference. */
+.icon-svg {
+  display: block;
+  width: 1em;
+  height: 1em;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.7;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.brand-name { letter-spacing: 0.02em; text-transform: none; }
+.brand-subtitle { letter-spacing: 0.12em; text-transform: none; }
+.zone-heading-icon, .showcase-heading-icon { display: grid; width: 29px; height: 29px; place-items: center; flex: none; }
+.zone-heading-icon .icon-svg, .showcase-heading-icon .icon-svg { width: 27px; height: 27px; stroke-width: 1.55; }
+.tile-icon { display: grid; width: 30px; height: 30px; place-items: center; }
+.tile-icon .icon-svg { width: 28px; height: 28px; stroke-width: 1.55; }
+.display-tile.is-active .tile-icon { color: #405f7c; }
+.tile-name { line-height: 1.15; }
+.tile-state { font-weight: 550; }
+.level-ring span { font-size: 11px; font-weight: 700; }
+.quick-action span { display: grid; width: 20px; height: 20px; place-items: center; }
+.quick-action span .icon-svg { width: 17px; height: 17px; stroke-width: 1.65; }
+.energy-row-label > span { display: grid; width: 22px; height: 22px; place-items: center; }
+.energy-row-label > span .icon-svg { width: 20px; height: 20px; }
+
+.media-showcase-visual { align-items: stretch; }
+.media-showcase-visual .feature-media { min-height: 205px; }
+.feature-media-icon .icon-svg { width: 21px; height: 21px; }
+.spotify-card { padding: 0 0 13px; overflow: hidden; background: #2d343a; }
+.spotify-card.is-playing { background: linear-gradient(140deg, rgba(85, 130, 104, 0.42), #2d343a 58%); }
+.spotify-card-art { position: relative; display: flex; min-height: 101px; flex-direction: column; justify-content: space-between; padding: 14px 15px 13px; overflow: hidden; background: linear-gradient(135deg, #4b5358 0%, #353c41 42%, #22272b 100%); }
+.spotify-card-art::before { position: absolute; inset: 0; content: ""; opacity: 0.72; background: radial-gradient(circle at 74% 26%, rgba(255, 146, 67, 0.35), transparent 25%), radial-gradient(circle at 28% 70%, rgba(122, 177, 200, 0.38), transparent 33%), repeating-linear-gradient(140deg, transparent 0 12px, rgba(255, 255, 255, 0.035) 13px 15px); }
+.spotify-art-glow { position: absolute; right: -16px; bottom: -34px; width: 160px; height: 110px; border-radius: 50%; opacity: 0.45; background: #ff8a22; filter: blur(30px); }
+.spotify-art-top, .spotify-art-copy { position: relative; z-index: 1; display: flex; align-items: center; }
+.spotify-art-top { gap: 8px; }
+.spotify-mark { display: grid; width: 34px; height: 34px; place-items: center; border-radius: 50%; color: #19231e; background: #eef0f2; }
+.spotify-logo { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; }
+.spotify-platform { color: rgba(255, 255, 255, 0.8); font-size: 11px; font-weight: 750; letter-spacing: 0.08em; text-transform: uppercase; }
+.media-heart { display: grid; width: 28px; height: 28px; margin-left: auto; place-items: center; border: 0; color: var(--ink); font-size: 24px; background: transparent; }
+.spotify-art-copy { display: block; }
+.spotify-art-copy strong, .spotify-art-copy span { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.spotify-art-copy strong { font-size: 20px; letter-spacing: -0.04em; }
+.spotify-art-copy span { margin-top: 2px; color: rgba(255, 255, 255, 0.64); font-size: 11px; }
+.spotify-progress { padding: 10px 15px 0; }
+.progress-times { display: flex; justify-content: space-between; color: var(--muted); font-size: 10px; }
+.progress-track { height: 4px; margin-top: 5px; overflow: hidden; border-radius: 99px; background: rgba(255, 255, 255, 0.18); }
+.progress-track span { display: block; height: 100%; border-radius: inherit; background: #d8e6ec; }
+.spotify-card .feature-media-controls { margin-top: 9px; padding: 0 15px; }
+.spotify-card .feature-media-volume { margin: 11px 15px 0; }
+.media-connection-note { margin: 9px 15px 0; color: var(--orange-bright); font-size: 10px; font-weight: 650; }
+.media-control.is-disabled, .media-heart:disabled { cursor: default; opacity: 0.62; }
+
+.video-feature { min-width: 0; min-height: 205px; overflow: hidden; border: 1px solid rgba(255, 255, 255, 0.14); border-radius: 18px; background: #26323a; box-shadow: 0 9px 24px rgba(0, 0, 0, 0.16); }
+.video-art { position: relative; min-height: 205px; overflow: hidden; background: linear-gradient(165deg, #243b47 0%, #476f75 42%, #15252c 100%); }
+.video-art-sky { position: absolute; inset: 0 0 36% 0; background: radial-gradient(circle at 16% 36%, rgba(245, 218, 165, 0.7), transparent 8%), linear-gradient(180deg, rgba(153, 198, 205, 0.34), transparent); }
+.video-art-water { position: absolute; right: -10%; bottom: -18%; left: -10%; height: 64%; transform: perspective(190px) rotateX(8deg); background: repeating-linear-gradient(170deg, rgba(166, 220, 231, 0.55) 0 2px, rgba(70, 137, 150, 0.22) 3px 9px), linear-gradient(180deg, #397d8e, #17333d); box-shadow: 0 -14px 30px rgba(103, 203, 217, 0.28); }
+.video-art-lights { position: absolute; top: 27%; right: 12%; width: 22%; height: 23%; opacity: 0.9; background: radial-gradient(circle, rgba(255, 231, 174, 0.9) 0 7%, transparent 8% 18%, rgba(255, 219, 151, 0.45) 19% 21%, transparent 22% 100%); }
+.video-art-toolbar { position: absolute; top: 14px; right: 15px; left: 15px; display: flex; justify-content: space-between; color: rgba(255, 255, 255, 0.88); }
+.video-art-toolbar .icon-svg { width: 20px; height: 20px; }
+.video-art-toolbar button { border: 0; color: inherit; font-size: 22px; background: transparent; }
+.video-art-caption { position: absolute; right: 15px; bottom: 14px; left: 15px; display: flex; align-items: center; gap: 9px; color: #fff; text-shadow: 0 2px 10px rgba(0, 0, 0, 0.42); }
+.video-art-caption strong, .video-art-caption small { display: block; }
+.video-art-caption strong { font-size: 16px; }
+.video-art-caption small { margin-top: 2px; color: rgba(255, 255, 255, 0.72); font-size: 11px; }
+.video-art-icon { display: grid; width: 31px; height: 31px; place-items: center; border-radius: 50%; background: rgba(12, 28, 34, 0.55); }
+.video-art-icon .icon-svg { width: 19px; height: 19px; }
+.video-play { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -58%); color: #1f2c31; background: #eef0f2; }
+.video-play:active { transform: translate(-50%, -58%) scale(0.96); }
+

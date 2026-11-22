@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.5.0
+
+- Aproxima os cards de cômodos do mockup aprovado com ícones dedicados, nomes mais curtos e seleção de dispositivos por prioridade visual.
+- Adiciona composição de Áudio e Vídeo com cartão visual de Spotify/Playlist Festa e preview da TV, sem iniciar a integração de conta ainda.
+- Refinamento visual dos indicadores de energia, ícones e cartões multimídia.
+
 ## 0.4.1
 
 - Corrige a tela Casa para esconder completamente a grade detalhada legada e remover a duplicação do atalho Garagem.
