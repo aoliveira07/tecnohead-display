@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.6.2
+
+- Deixa a garagem focada nos controles e métricas úteis do Volvo e do carregador, sem despejar sensores técnicos na tela inicial.
+- Atualiza a versão exibida pelo painel e pela API.
+
 ## 0.6.0
 
 - Adiciona configuração persistente de cômodos, categorias e ordem dos dispositivos.

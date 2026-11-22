@@ -324,7 +324,12 @@
   }
 
   function garageDisplayRelevant(entity) {
-    return configEntityRelevant(entity, "garagem");
+    const text = vehicleEntityText(entity);
+    if (["light", "switch", "fan", "cover", "lock", "button"].includes(entity?.domain)) return true;
+    if (/\b(volvo|xc40|ex40)\b/.test(text)) {
+      return /bater(?:ia|y)|n[ií]vel de carga|state of charge|\bsoc\b|estado do carregamento|charging state|pot[eê]ncia de carregamento|charging power|liga[cç][aã]o ao carro|car connection/.test(text);
+    }
+    return /carga ring|charge control|carregamento|availability|disponibilidade|port[aã]o|gate|destravar|unlock/.test(text);
   }
 
   function renderRoomList() {
