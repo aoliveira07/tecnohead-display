@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <meta name="theme-color" content="#161b20">
     <title>Tecnohead Display</title>
-    <link rel="stylesheet" href="static/style.css?v=0.2.0">
+    <link rel="stylesheet" href="static/style.css?v=0.3.0">
   </head>
   <body>
     <div class="ambient ambient-one"></div>
@@ -100,8 +100,18 @@
       </main>
     </div>
 
+    <section class="photo-frame is-hidden" id="photo-frame" aria-label="Porta-retrato" aria-hidden="true">
+      <div class="photo-frame-backdrop"></div>
+      <img id="photo-frame-image" alt="Foto do álbum Tecnohead Display">
+      <div class="photo-frame-caption">
+        <span>TECNOHEAD DISPLAY</span>
+        <strong id="photo-frame-name">Porta-retrato</strong>
+      </div>
+      <button class="photo-frame-exit" id="photo-frame-exit" type="button">Voltar ao painel</button>
+    </section>
+
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
-    <script src="static/dashboard.js?v=0.2.0" defer></script>
+    <script src="static/dashboard.js?v=0.3.0" defer></script>
   </body>
 </html>
 

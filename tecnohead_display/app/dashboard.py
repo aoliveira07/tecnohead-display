@@ -273,7 +273,7 @@ async def build_dashboard(client: HomeAssistantClient) -> dict[str, object]:
             garage.append(entity)
 
     return {
-        "app": {"name": "Tecnohead Display", "version": "0.2.0"},
+        "app": {"name": "Tecnohead Display", "version": "0.3.0"},
         "home": {"name": str(config.get("location_name") or "Casa")},
         "areas": areas,
         "scenes": scenes,

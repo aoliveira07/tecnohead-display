@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.3.0
+
+- Adiciona sincronização somente leitura de um álbum do Immich para cache persistente no Home Assistant.
+- Adiciona porta-retrato digital após período configurável sem interação, com retorno ao painel por toque.
+- Mantém credenciais do Immich no add-on; a chave nunca é enviada ao navegador nem versionada.
+
 ## 0.2.0
 
 - Atualiza a interface para o layout grafite inspirado no mockup aprovado.

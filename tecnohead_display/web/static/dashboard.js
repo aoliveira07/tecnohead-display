@@ -1,9 +1,25 @@
 (() => {
   "use strict";
 
-  const state = { payload: null, view: "all", areaId: null, loading: false, timer: null };
+  const state = {
+    payload: null,
+    view: "all",
+    areaId: null,
+    loading: false,
+    timer: null,
+    photoSyncTimer: null,
+    photoIdleTimer: null,
+    photoTimer: null,
+    photos: [],
+    photoIndex: 0,
+    photoFrameVisible: false,
+    photoConfig: null,
+  };
   const $ = (selector) => document.querySelector(selector);
   const roomList = $("#room-list");
+  const photoFrame = $("#photo-frame");
+  const photoImage = $("#photo-frame-image");
+  const photoName = $("#photo-frame-name");
 
   const ICONS = {
     light: "✦",
@@ -114,6 +130,88 @@
     element.classList.add("is-visible");
     window.clearTimeout(toast.timeout);
     toast.timeout = window.setTimeout(() => element.classList.remove("is-visible"), 2600);
+  }
+
+  function photoSettings() {
+    return state.payload?.photo_frame || state.photoConfig || {
+      enabled: false,
+      idle_seconds: 180,
+      interval_seconds: 12,
+      sync_interval_seconds: 600,
+    };
+  }
+
+  function clearPhotoTimer() {
+    window.clearInterval(state.photoTimer);
+    state.photoTimer = null;
+  }
+
+  function renderPhoto() {
+    const photo = state.photos[state.photoIndex];
+    if (!photo) return;
+    const cacheBust = photo.updated_at ? `?v=${encodeURIComponent(photo.updated_at)}` : "";
+    photoImage.src = `${photo.url}${cacheBust}`;
+    photoImage.alt = photo.name || "Foto do álbum Tecnohead Display";
+    photoName.textContent = photo.name || "Porta-retrato";
+  }
+
+  function showPhotoFrame() {
+    if (!state.photos.length || state.photoFrameVisible) return;
+    state.photoIdleTimer = null;
+    state.photoFrameVisible = true;
+    state.photoIndex = Math.min(state.photoIndex, state.photos.length - 1);
+    photoFrame.classList.remove("is-hidden");
+    photoFrame.setAttribute("aria-hidden", "false");
+    document.body.classList.add("photo-frame-open");
+    renderPhoto();
+    clearPhotoTimer();
+    const seconds = Math.max(5, Number(photoSettings().interval_seconds) || 12);
+    state.photoTimer = window.setInterval(() => {
+      state.photoIndex = (state.photoIndex + 1) % state.photos.length;
+      renderPhoto();
+    }, seconds * 1000);
+  }
+
+  function schedulePhotoFrame() {
+    window.clearTimeout(state.photoIdleTimer);
+    state.photoIdleTimer = null;
+    if (state.photoFrameVisible) return;
+    const settings = photoSettings();
+    if (!settings.enabled || !state.photos.length) return;
+    const seconds = Math.max(30, Number(settings.idle_seconds) || 180);
+    state.photoIdleTimer = window.setTimeout(showPhotoFrame, seconds * 1000);
+  }
+
+  function exitPhotoFrame() {
+    if (!state.photoFrameVisible) return;
+    state.photoFrameVisible = false;
+    clearPhotoTimer();
+    photoImage.removeAttribute("src");
+    photoFrame.classList.add("is-hidden");
+    photoFrame.setAttribute("aria-hidden", "true");
+    document.body.classList.remove("photo-frame-open");
+    schedulePhotoFrame();
+  }
+
+  async function loadPhotos(force = false) {
+    try {
+      const response = await fetch(force ? "api/photos/sync" : "api/photos", {
+        method: force ? "POST" : "GET",
+        cache: "no-store",
+      });
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      const body = await response.json();
+      state.photos = Array.isArray(body.photos) ? body.photos : [];
+      state.photoConfig = body;
+      if (state.photoIndex >= state.photos.length) state.photoIndex = 0;
+      window.clearInterval(state.photoSyncTimer);
+      const syncSeconds = Math.max(60, Number(body.sync_interval_seconds) || 600);
+      state.photoSyncTimer = window.setInterval(() => loadPhotos(false), syncSeconds * 1000);
+      schedulePhotoFrame();
+    } catch (error) {
+      console.warn("Falha ao sincronizar fotos do Immich", error);
+      schedulePhotoFrame();
+    }
   }
 
   function setConnection(online, message) {
@@ -521,6 +619,32 @@
     }
   });
 
+  function registerActivity(event) {
+    if (state.photoFrameVisible) {
+      if (photoFrame.contains(event.target)) return;
+      exitPhotoFrame();
+      return;
+    }
+    schedulePhotoFrame();
+  }
+
+  photoFrame.addEventListener("pointerdown", (event) => {
+    event.stopPropagation();
+    exitPhotoFrame();
+  });
+  $("#photo-frame-exit").addEventListener("click", (event) => {
+    event.stopPropagation();
+    exitPhotoFrame();
+  });
+  document.addEventListener("pointerdown", registerActivity, { passive: true });
+  document.addEventListener("keydown", (event) => {
+    if (state.photoFrameVisible) {
+      exitPhotoFrame();
+      return;
+    }
+    registerActivity(event);
+  });
+
   document.addEventListener("change", (event) => {
     const source = event.target.closest('[data-action="source"]');
     if (source && source.value) sendAction(source.dataset.id, "source", source.value);
@@ -530,6 +654,7 @@
 
   $("#refresh-button").addEventListener("click", () => load(true));
   load(false);
+  loadPhotos();
   window.setInterval(renderSidebar, 30000);
 })();
 

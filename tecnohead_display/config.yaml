@@ -1,5 +1,5 @@
 name: Tecnohead Display
-version: "0.2.0"
+version: "0.3.0"
 slug: tecnohead_display
 description: Painel touch Tecnohead em grafite para controlar o Home Assistant.
 url: https://github.com/aoliveira07/tecnohead-display
@@ -18,11 +18,27 @@ ports:
   8099/tcp: null
 ports_description:
   8099/tcp: Interface direta opcional do painel
+map:
+  - type: data
+    read_only: false
+    path: /data
 options:
   ha_url: http://supervisor/core
   refresh_seconds: 10
+  immich_url: http://192.168.0.201:2283
+  immich_api_key: ""
+  immich_album_id: e633d071-7e92-4de0-b049-827b7f9ccbd2
+  photo_sync_minutes: 10
+  photo_idle_seconds: 180
+  photo_interval_seconds: 12
 schema:
   ha_url: str
   refresh_seconds: int(3,120)
+  immich_url: str
+  immich_api_key: password
+  immich_album_id: str
+  photo_sync_minutes: int(1,1440)
+  photo_idle_seconds: int(30,3600)
+  photo_interval_seconds: int(5,300)
 homeassistant_api: true
 

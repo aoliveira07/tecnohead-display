@@ -8,6 +8,8 @@ O app usa `http://supervisor/core` por padrão e recebe `SUPERVISOR_TOKEN` autom
 
 `homeassistant_api: true` é necessário porque o painel lê registries/estados e envia comandos aos dispositivos. Esse token é tratado somente no backend do app; nunca é entregue ao JavaScript.
 
+O porta-retrato usa as opções `immich_url`, `immich_api_key` e `immich_album_id`. O add-on sincroniza somente imagens do álbum para `/data/photo-frame`, com intervalo configurável, e serve apenas o cache local ao navegador. A chave de API do Immich não aparece no payload do painel.
+
 ## Interface
 
 O layout foi pensado para uma tela touch horizontal próxima de 1366×768, com áreas descobertas automaticamente e três superfícies fixas: Garagem, Energia e Casa. O painel não inventa valores de energia: quando um sensor não existe ou está indisponível, mostra a ausência de leitura.

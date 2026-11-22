@@ -11,11 +11,13 @@ from pydantic import BaseModel, Field
 
 from .dashboard import build_dashboard, execute_entity_action
 from .ha_client import HomeAssistantClient, HomeAssistantError
+from .immich import ImmichError, ImmichPhotoFrame
 
 WEB_DIR = Path(__file__).resolve().parents[1] / "web"
 client = HomeAssistantClient.from_env()
+photo_frame = ImmichPhotoFrame.from_env()
 
-app = FastAPI(title="Tecnohead Display", version="0.2.0")
+app = FastAPI(title="Tecnohead Display", version="0.3.0")
 app.mount("/static", StaticFiles(directory=WEB_DIR / "static"), name="static")
 
 
@@ -42,7 +44,9 @@ async def health() -> dict[str, str]:
 @app.get("/api/dashboard")
 async def dashboard() -> dict[str, object]:
     try:
-        return await build_dashboard(client)
+        payload = await build_dashboard(client)
+        payload["photo_frame"] = photo_frame.public_config()
+        return payload
     except HomeAssistantError as exc:
         raise HTTPException(status_code=502, detail=str(exc)) from exc
 
@@ -65,4 +69,28 @@ async def scene_action(payload: SceneAction) -> dict[str, object]:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
     except HomeAssistantError as exc:
         raise HTTPException(status_code=502, detail=str(exc)) from exc
+
+
+@app.get("/api/photos")
+async def photos() -> dict[str, object]:
+    try:
+        return await photo_frame.list_photos()
+    except ImmichError as exc:
+        raise HTTPException(status_code=502, detail=str(exc)) from exc
+
+
+@app.post("/api/photos/sync")
+async def sync_photos() -> dict[str, object]:
+    try:
+        return await photo_frame.list_photos(force=True)
+    except ImmichError as exc:
+        raise HTTPException(status_code=502, detail=str(exc)) from exc
+
+
+@app.get("/api/photos/{filename:path}", include_in_schema=False)
+async def photo_file(filename: str) -> FileResponse:
+    path = photo_frame.photo_path(filename)
+    if path is None:
+        raise HTTPException(status_code=404, detail="Foto não encontrada")
+    return FileResponse(path, media_type=photo_frame.media_type(path))
 

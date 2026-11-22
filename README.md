@@ -16,6 +16,8 @@ Este projeto é separado do `tecnohead-multimidia`. Ele não importa código, n�
 - garagem baseada na área e em nomes como garagem, carro, wallbox e carregador;
 - backend intermediário: o token fica no add-on e nunca vai para o navegador;
 - polling configurável para manter a tela atualizada.
+- sincronização somente leitura de um álbum do Immich para um cache persistente no Home Assistant;
+- porta-retrato digital após período configurável sem interação, retornando ao painel com um toque.
 
 ## Estrutura
 
@@ -31,6 +33,8 @@ O backend lê os estados pela API REST e usa WebSocket apenas para os registries
 4. Inicie o add-on e abra o painel pelo botão que o Home Assistant adicionará à barra lateral.
 
 O endereço padrão dentro do add-on é `http://supervisor/core`, usando `SUPERVISOR_TOKEN`. O campo `ha_url` existe para desenvolvimento ou para uma instalação onde o Home Assistant esteja em outro endereço.
+
+Para o porta-retrato, configure no add-on `immich_url`, `immich_api_key` e `immich_album_id`. O álbum é consultado por `POST /api/search/metadata`, as miniaturas são copiadas para o armazenamento persistente do add-on e a chave permanece apenas no backend.
 
 ## Desenvolvimento local
 
