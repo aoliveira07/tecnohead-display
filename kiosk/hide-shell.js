@@ -13,10 +13,14 @@
     const sidebar = drawer?.querySelector("ha-sidebar");
     const resolver = drawer?.querySelector("partial-panel-resolver");
     const panel = resolver?.querySelector("ha-panel-app");
+    const appContent = drawer?.shadowRoot?.querySelector(".app-content");
 
     if (!sidebar || !panel) return;
 
     setImportant(sidebar, "display", "none");
+    setImportant(appContent, "padding-inline-start", "0");
+    setImportant(appContent, "padding-left", "0");
+    setImportant(appContent, "width", "100%");
     setImportant(resolver, "width", "100%");
     setImportant(panel, "width", "100%");
     setImportant(panel, "margin-left", "0");
