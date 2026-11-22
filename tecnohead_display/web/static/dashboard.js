@@ -315,6 +315,18 @@
     ));
   }
 
+  function configEntityRelevant(entity, groupKey = "") {
+    if (entityAttributes(entity).entity_category === "diagnostic") return false;
+    if (ROOM_DOMAINS.has(entity?.domain) || ["scene", "script"].includes(entity?.domain)) return true;
+    if (groupKey !== "garagem") return false;
+    const text = vehicleEntityText(entity);
+    return /volvo|xc40|ex40|carreg|charg|wallbox|bater|battery|\bsoc\b|pot[eê]ncia|power|energy|connector|port[aã]o|gate|status|reset|destravar/.test(text);
+  }
+
+  function garageDisplayRelevant(entity) {
+    return configEntityRelevant(entity, "garagem");
+  }
+
   function renderRoomList() {
     const areas = state.payload?.areas || [];
     roomList.innerHTML = areas.map((area) => `
@@ -870,7 +882,7 @@
   function garageEntitiesForDisplay() {
     const discovered = state.payload?.garage?.entities || [];
     const garageConfig = state.layout?.garage || {};
-    if (!garageConfig.manual) return discovered;
+    if (!garageConfig.manual) return discovered.filter(garageDisplayRelevant);
     const selected = new Set(Array.isArray(garageConfig.entity_ids) ? garageConfig.entity_ids : []);
     return discovered.filter((entity) => selected.has(entity.entity_id));
   }
@@ -942,7 +954,10 @@
       ? explicitAreas
       : configAreas().filter((area) => roomGroupKey(area) === group.key).map((area) => area.id);
     const selectedIds = new Set(Array.isArray(group.entity_ids) ? group.entity_ids : []);
-    return allEntities().filter((entity) => areaIds.includes(entity.area_id) || selectedIds.has(entity.entity_id));
+    return allEntities().filter((entity) => (
+      (areaIds.includes(entity.area_id) || selectedIds.has(entity.entity_id))
+      && configEntityRelevant(entity, group.key)
+    ));
   }
 
   function orderedConfigEntities(entities, order) {
@@ -1003,8 +1018,12 @@
 
   function configGarageCard() {
     const garageConfig = state.layout?.garage || {};
-    const entities = orderedConfigEntities(state.payload?.garage?.entities || [], garageConfig.order);
     const selectedIds = new Set(Array.isArray(garageConfig.entity_ids) ? garageConfig.entity_ids : []);
+    const discovered = state.payload?.garage?.entities || [];
+    const source = garageConfig.manual
+      ? discovered.filter((entity) => selectedIds.has(entity.entity_id) || garageDisplayRelevant(entity))
+      : discovered.filter(garageDisplayRelevant);
+    const entities = orderedConfigEntities(source, garageConfig.order);
     const automatic = !garageConfig.manual;
     return `
       <article class="config-room-card config-garage-card" data-config-garage>

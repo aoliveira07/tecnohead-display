@@ -7,6 +7,11 @@
 - Inclui cartão preparado para Volvo XC40/EX40, bateria, carregamento, potência e conexão.
 - Corrige o shell do quiosque para esconder a barra lateral do Home Assistant mesmo após mudanças no DOM.
 
+## 0.6.1
+
+- Inclui entidades Volvo/XC40/EX40 na descoberta da garagem.
+- Mantém o editor e a grade principal focados nos controles úteis, deixando diagnósticos fora da tela inicial.
+
 ## 0.5.0
 
 - Aproxima os cards de cômodos do mockup aprovado com ícones dedicados, nomes mais curtos e seleção de dispositivos por prioridade visual.

@@ -18,7 +18,7 @@ WEB_DIR = Path(__file__).resolve().parents[1] / "web"
 client = HomeAssistantClient.from_env()
 photo_frame = ImmichPhotoFrame.from_env()
 
-app = FastAPI(title="Tecnohead Display", version="0.6.0")
+app = FastAPI(title="Tecnohead Display", version="0.6.1")
 app.mount("/static", StaticFiles(directory=WEB_DIR / "static"), name="static")
 layout_store = DisplayLayoutStore()
 

@@ -83,6 +83,9 @@ GARAGE_KEYWORDS = (
     "carregador",
     "charger",
     "ev_",
+    "volvo",
+    "xc40",
+    "ex40",
 )
 ENTITY_ID_RE = re.compile(r"^[a-z0-9_]+\.[a-z0-9_]+$")
 
