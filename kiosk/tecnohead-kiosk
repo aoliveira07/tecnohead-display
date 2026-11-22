@@ -32,6 +32,7 @@ while :; do
         --no-default-browser-check \
         --disable-session-crashed-bubble \
         --disable-infobars \
+        --disable-http-cache \
         --noerrdialogs \
         --disable-translate \
         --disable-features=Translate,MediaRouter \
