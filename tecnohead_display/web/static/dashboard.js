@@ -499,7 +499,7 @@
 
   function renderQuickActions() {
     const scenes = (state.payload?.scenes || []).slice(0, 3);
-    const groups = homeRoomGroups();
+    const groups = homeRoomGroups().filter((group) => group.key !== "garagem");
     const actions = [
       { view: "all", icon: "⌂", label: "Casa" },
       ...scenes.map((scene) => ({ scene: scene.entity_id, icon: "✦", label: scene.name })),

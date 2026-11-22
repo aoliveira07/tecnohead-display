@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.4.1
+
+- Corrige a tela Casa para esconder completamente a grade detalhada legada e remover a duplicação do atalho Garagem.
+
 ## 0.4.0
 
 - Recria a home do display com a composição aprovada: contexto lateral, cômodos em blocos, áudio/vídeo, energia e navegação inferior.
