@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Tecnohead Display Kiosk Shell",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Hides the Home Assistant shell around the Tecnohead Display in the kitchen kiosk.",
   "content_scripts": [
     {

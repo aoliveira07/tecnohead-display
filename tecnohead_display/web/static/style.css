@@ -849,3 +849,97 @@ body { background: #20252b; }
 .video-play { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -58%); color: #1f2c31; background: #eef0f2; }
 .video-play:active { transform: translate(-50%, -58%) scale(0.96); }
 
+/* Configuration workspace and garage vehicle card. */
+.brand-mark { position: relative; overflow: hidden; }
+.brand-mark span { position: relative; z-index: 1; }
+.brand-mark i { position: absolute; right: 5px; bottom: 5px; width: 15px; height: 4px; border-radius: 999px; background: rgba(255, 247, 235, 0.72); transform: rotate(-28deg); }
+.topbar-actions .config-button { color: var(--orange-bright); }
+.config-header { display: flex; align-items: flex-end; justify-content: space-between; gap: 18px; margin-bottom: 13px; }
+.config-header p { margin-top: 7px; color: var(--muted); font-size: 13px; }
+.config-header-actions, .config-footer { display: flex; flex-wrap: wrap; gap: 9px; }
+.config-action { min-height: 42px; padding: 0 16px; border: 1px solid rgba(255, 255, 255, 0.16); border-radius: 13px; cursor: pointer; color: var(--ink); background: rgba(255, 255, 255, 0.08); }
+.config-action.primary { border-color: rgba(255, 173, 84, 0.55); color: #25170e; background: linear-gradient(135deg, #ffd39b, #ff8a22); }
+.config-action.secondary:hover { background: rgba(255, 255, 255, 0.14); }
+.config-action.danger { color: #ffc0aa; background: rgba(116, 48, 37, 0.28); }
+.config-note { margin-bottom: 13px; padding: 11px 14px; border: 1px solid rgba(169, 209, 235, 0.16); border-radius: 13px; color: var(--muted); font-size: 11px; background: rgba(169, 209, 235, 0.07); }
+.config-rooms { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 13px; padding-bottom: 15px; }
+.config-room-card { min-width: 0; padding: 15px; border: 1px solid rgba(255, 255, 255, 0.12); border-radius: 18px; background: #2c333a; box-shadow: 0 8px 20px rgba(0, 0, 0, 0.14); }
+.config-room-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.config-room-title { display: flex; min-width: 0; align-items: center; gap: 10px; }
+.config-room-icon { display: grid; width: 34px; height: 34px; flex: 0 0 auto; place-items: center; border-radius: 11px; color: var(--orange); background: rgba(255, 138, 34, 0.13); }
+.config-room-icon .icon-svg { width: 22px; height: 22px; }
+.config-room-title h3 { font-size: 17px; letter-spacing: -0.03em; }
+.config-room-title p { margin-top: 3px; color: var(--muted); font-size: 10px; }
+.config-toggle { display: inline-flex; align-items: center; gap: 7px; color: var(--muted); font-size: 10px; cursor: pointer; }
+.config-toggle input { position: absolute; opacity: 0; pointer-events: none; }
+.config-toggle span { position: relative; width: 32px; height: 18px; border-radius: 99px; background: rgba(255, 255, 255, 0.15); }
+.config-toggle span::after { position: absolute; top: 3px; left: 3px; width: 12px; height: 12px; border-radius: 50%; content: ""; background: rgba(255, 255, 255, 0.72); transition: 160ms ease; }
+.config-toggle input:checked + span { background: var(--orange); }
+.config-toggle input:checked + span::after { transform: translateX(14px); background: #fff6ea; }
+.config-area-block { margin-top: 14px; padding-top: 12px; border-top: 1px solid rgba(255, 255, 255, 0.09); }
+.config-label { color: var(--orange-bright); font-size: 9px; font-weight: 800; letter-spacing: 0.13em; }
+.config-area-choices { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.config-area-choice { display: inline-flex; min-height: 31px; align-items: center; gap: 5px; padding: 0 9px; border: 1px solid rgba(255, 255, 255, 0.12); border-radius: 999px; color: var(--muted); font-size: 10px; cursor: pointer; background: rgba(255, 255, 255, 0.05); }
+.config-area-choice:has(input:checked) { border-color: rgba(255, 173, 84, 0.42); color: var(--ink); background: rgba(255, 138, 34, 0.16); }
+.config-area-choice input { accent-color: var(--orange); }
+.config-area-choice .icon-svg { width: 14px; height: 14px; color: var(--blue); }
+.config-sections { display: flex; flex-direction: column; gap: 9px; margin-top: 13px; }
+.config-section { padding: 10px; border: 1px solid rgba(255, 255, 255, 0.09); border-radius: 13px; background: rgba(255, 255, 255, 0.035); }
+.config-section.is-disabled { opacity: 0.54; }
+.config-section-heading { display: flex; align-items: center; gap: 8px; cursor: pointer; }
+.config-section-heading input { accent-color: var(--orange); }
+.config-section-heading span { display: flex; min-width: 0; flex: 1; flex-direction: column; }
+.config-section-heading strong { color: var(--ink); font-size: 11px; }
+.config-section-heading small { margin-top: 2px; overflow: hidden; color: var(--quiet); font-size: 9px; text-overflow: ellipsis; white-space: nowrap; }
+.config-section-heading b { color: var(--quiet); font-size: 10px; font-weight: 650; }
+.config-entity-list { display: flex; flex-direction: column; gap: 5px; margin-top: 8px; }
+.config-entity-row { display: flex; min-height: 40px; align-items: center; gap: 7px; padding: 5px 6px; border: 1px solid transparent; border-radius: 10px; cursor: grab; background: rgba(255, 255, 255, 0.045); }
+.config-entity-row:active { cursor: grabbing; }
+.config-entity-row.is-dragging { opacity: 0.45; border-color: var(--orange); }
+.config-entity-row:has(.config-entity-check:not(:checked)) { opacity: 0.48; }
+.config-entity-check { flex: 0 0 auto; accent-color: var(--orange); }
+.config-drag-handle { width: 12px; color: var(--quiet); font-size: 16px; line-height: 1; }
+.config-entity-icon { display: grid; width: 25px; height: 25px; flex: 0 0 auto; place-items: center; color: var(--blue); }
+.config-entity-icon .icon-svg { width: 19px; height: 19px; }
+.config-entity-copy { display: flex; min-width: 0; flex: 1; flex-direction: column; }
+.config-entity-copy strong { overflow: hidden; color: var(--ink); font-size: 10px; text-overflow: ellipsis; white-space: nowrap; }
+.config-entity-copy small { margin-top: 2px; overflow: hidden; color: var(--quiet); font-size: 8px; text-overflow: ellipsis; white-space: nowrap; }
+.config-entity-state { max-width: 82px; overflow: hidden; color: var(--muted); font-size: 9px; text-overflow: ellipsis; white-space: nowrap; }
+.config-move-buttons { display: inline-flex; gap: 2px; }
+.config-move-buttons button { display: grid; width: 23px; height: 23px; place-items: center; padding: 0; border: 1px solid rgba(255, 255, 255, 0.11); border-radius: 7px; color: var(--muted); cursor: pointer; background: rgba(255, 255, 255, 0.06); }
+.config-move-buttons button:active { color: var(--orange-bright); background: rgba(255, 138, 34, 0.17); }
+.config-empty { padding: 8px 2px; color: var(--quiet); font-size: 10px; }
+.config-footer { align-items: center; justify-content: space-between; padding-bottom: 26px; }
+.vehicle-card { display: grid; grid-template-columns: minmax(150px, 0.68fr) minmax(0, 1.32fr); min-height: 190px; margin-bottom: 14px; overflow: hidden; border: 1px solid rgba(255, 255, 255, 0.14); border-radius: 19px; background: #2c353d; box-shadow: 0 9px 24px rgba(0, 0, 0, 0.16); }
+.vehicle-card-art { position: relative; display: flex; min-height: 190px; flex-direction: column; align-items: center; justify-content: center; overflow: hidden; color: rgba(255, 255, 255, 0.68); background: linear-gradient(150deg, #334652, #17252d); }
+.vehicle-card-art > span { position: absolute; bottom: 12px; color: var(--blue); font-size: 9px; font-weight: 800; letter-spacing: 0.18em; }
+.vehicle-glow { position: absolute; right: -20%; bottom: -34%; width: 160px; height: 150px; border-radius: 50%; opacity: 0.46; background: #4f9fbc; filter: blur(30px); }
+.vehicle-car-icon { position: relative; z-index: 1; display: grid; width: 100px; height: 100px; place-items: center; border: 1px solid rgba(169, 209, 235, 0.22); border-radius: 50%; color: #cce4ee; background: rgba(169, 209, 235, 0.10); }
+.vehicle-car-icon .icon-svg { width: 62px; height: 62px; stroke-width: 1.15; }
+.vehicle-card-body { min-width: 0; padding: 20px; }
+.vehicle-card-title { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.vehicle-card-title h3 { margin-top: 5px; font-size: 23px; letter-spacing: -0.05em; }
+.vehicle-card-title p { margin-top: 4px; color: var(--muted); font-size: 10px; }
+.vehicle-battery-badge { flex: 0 0 auto; padding: 7px 9px; border: 1px solid rgba(169, 209, 235, 0.22); border-radius: 10px; color: var(--blue); font-size: 13px; font-weight: 750; background: rgba(169, 209, 235, 0.08); }
+.vehicle-battery-track { height: 8px; margin-top: 23px; overflow: hidden; border-radius: 99px; background: rgba(255, 255, 255, 0.12); }
+.vehicle-battery-track span { display: block; height: 100%; min-width: 3px; border-radius: inherit; background: linear-gradient(90deg, #83c8e3, #d5eff4); }
+.vehicle-stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin-top: 22px; }
+.vehicle-stats div { min-width: 0; }
+.vehicle-stats span, .vehicle-stats strong { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.vehicle-stats span { color: var(--quiet); font-size: 9px; }
+.vehicle-stats strong { margin-top: 5px; color: var(--ink); font-size: 11px; }
+
+@media (max-width: 1080px) {
+  .config-rooms { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 760px) {
+  .config-header { align-items: flex-start; flex-direction: column; }
+  .config-header-actions { width: 100%; }
+  .config-action { flex: 1; }
+  .vehicle-card { grid-template-columns: 1fr; }
+  .vehicle-card-art { min-height: 150px; }
+  .vehicle-card-body { padding: 16px; }
+  .vehicle-stats { grid-template-columns: 1fr 1fr 1fr; }
+}
+

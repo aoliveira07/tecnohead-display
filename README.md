@@ -18,6 +18,8 @@ Este projeto é separado do `tecnohead-multimidia`. Ele não importa código, n�
 - polling configurável para manter a tela atualizada.
 - sincronização somente leitura de um álbum do Immich para um cache persistente no Home Assistant;
 - porta-retrato digital após período configurável sem interação, retornando ao painel com um toque.
+- editor de layout persistente para escolher áreas, categorias de dispositivos e ordem por cômodo;
+- cartão da garagem preparado para dados reais do Volvo XC40/EX40, sem preencher leituras ausentes.
 
 ## Estrutura
 
@@ -52,6 +54,10 @@ Depois, abra `http://localhost:8099/`.
 ## Mapeamento de energia e garagem
 
 O primeiro corte é intencionalmente automático para permitir instalação imediata. O painel classifica sensores por `device_class`, nome, entidade, dispositivo e cômodo. Para uma segunda etapa, podemos adicionar um arquivo de configuração explícito com os sensores exatos de geração, consumo, rede e bateria da casa, além de perfis para TV da piscina, Flep e outros equipamentos.
+
+### Editor de layout
+
+Na engrenagem do painel, **Configurar painel** permite selecionar as áreas do Home Assistant que serão espelhadas em Cozinha, Externo e Garagem. Dentro de cada área, as entidades são separadas em iluminação/acionamentos, áudio e vídeo e outros dispositivos. A seleção, a ordem e as categorias ficam persistidas em `/data/display-layout.json` no add-on; o modo automático continua sendo o padrão até o primeiro salvamento.
 
 ## Qualidade
 

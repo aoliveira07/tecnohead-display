@@ -6,6 +6,7 @@ import re
 from datetime import UTC, datetime
 
 from .ha_client import HomeAssistantClient
+from .layout_config import normalize_layout
 
 DISPLAY_DOMAINS = {
     "binary_sensor",
@@ -219,7 +220,38 @@ def _area_rows(
     return result
 
 
-async def build_dashboard(client: HomeAssistantClient) -> dict[str, object]:
+def layout_catalog(areas: list[dict[str, object]]) -> dict[str, object]:
+    """Return the safe area/entity catalog used by the layout editor."""
+
+    catalog_areas: list[dict[str, object]] = []
+    for area in areas:
+        catalog_areas.append(
+            {
+                "id": area.get("id"),
+                "name": area.get("name"),
+                "icon": area.get("icon"),
+                "entities": [
+                    {
+                        "entity_id": entity.get("entity_id"),
+                        "domain": entity.get("domain"),
+                        "name": entity.get("name"),
+                        "state": entity.get("state"),
+                        "area_id": entity.get("area_id"),
+                        "area_name": entity.get("area_name"),
+                        "device_name": entity.get("device_name"),
+                        "attributes": entity.get("attributes", {}),
+                    }
+                    for entity in area.get("entities", [])
+                    if isinstance(entity, dict)
+                ],
+            }
+        )
+    return {"areas": catalog_areas}
+
+
+async def build_dashboard(
+    client: HomeAssistantClient, layout: dict[str, object] | None = None
+) -> dict[str, object]:
     config, states, registries = await _read_home(client)
     area_registry = registries.get("areas", [])
     entity_registry = {
@@ -291,6 +323,10 @@ async def build_dashboard(client: HomeAssistantClient) -> dict[str, object]:
         },
         "refresh_seconds": int(os_environ_int("DISPLAY_REFRESH_SECONDS", 10)),
         "updated_at": datetime.now(UTC).isoformat(),
+        "layout_config": {
+            "layout": normalize_layout(layout),
+            "catalog": layout_catalog(areas),
+        },
     }
 
 

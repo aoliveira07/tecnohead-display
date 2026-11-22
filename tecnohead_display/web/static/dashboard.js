@@ -3,8 +3,11 @@
 
   const state = {
     payload: null,
+    layout: null,
+    catalog: null,
     view: "all",
     areaId: null,
+    configDirty: false,
     loading: false,
     timer: null,
     photoSyncTimer: null,
@@ -354,6 +357,48 @@
   }
 
   function homeRoomGroups() {
+    const configured = Array.isArray(state.layout?.groups) ? state.layout.groups : null;
+    if (configured) {
+      return configured
+        .filter((group) => group.enabled !== false)
+        .map((group) => {
+          const areaIds = Array.isArray(group.area_ids) && group.area_ids.length
+            ? group.area_ids
+            : (state.payload?.areas || [])
+              .filter((area) => roomGroupKey(area) === group.key)
+              .map((area) => area.id);
+          const selectedIds = new Set(Array.isArray(group.entity_ids) ? group.entity_ids : []);
+          const candidates = allEntities().filter((entity) => (
+            areaIds.includes(entity.area_id) || selectedIds.has(entity.entity_id)
+          ));
+          const entityById = new Map(candidates.map((entity) => [entity.entity_id, entity]));
+          const ordered = [];
+          const seen = new Set();
+          const append = (entity) => {
+            if (!entity || seen.has(entity.entity_id)) return;
+            seen.add(entity.entity_id);
+            ordered.push(entity);
+          };
+          const order = Array.isArray(group.order) ? group.order : [];
+          order.forEach((entityId) => append(entityById.get(entityId)));
+          candidates.forEach(append);
+          const sections = group.sections || {};
+          const visible = (entity) => {
+            if (group.manual && !selectedIds.has(entity.entity_id)) return false;
+            const section = entitySection(entity);
+            return sections[section] !== false;
+          };
+          return {
+            key: group.key,
+            label: group.label || group.key,
+            icon: roomIcon(group.key),
+            areaId: areaIds[0] || null,
+            manual: Boolean(group.manual),
+            entities: ordered.filter(visible),
+          };
+        });
+    }
+
     const groups = new Map();
     for (const area of state.payload?.areas || []) {
       const key = roomGroupKey(area);
@@ -377,6 +422,12 @@
         ...group,
         entities: [...new Map(group.entities.map((entity) => [entity.entity_id, entity])).values()],
       }));
+  }
+
+  function entitySection(entity) {
+    if (["light", "switch", "fan", "input_boolean"].includes(entity?.domain)) return "lighting";
+    if (entity?.domain === "media_player") return "media";
+    return "other";
   }
 
   function featuredEntities(entities, limit = 4, groupKey = "") {
@@ -430,7 +481,9 @@
   }
 
   function homeZone(group) {
-    const entities = featuredEntities(group.entities, 4, group.key);
+    const entities = group.manual
+      ? group.entities.slice(0, 4)
+      : featuredEntities(group.entities, 4, group.key);
     return `
       <section class="home-zone home-zone-${esc(group.key)}">
         <button class="zone-heading" data-view="area" data-area-id="${esc(group.areaId)}" type="button">
@@ -633,11 +686,11 @@
     const scenes = (state.payload?.scenes || []).slice(0, 3);
     const groups = homeRoomGroups().filter((group) => group.key !== "garagem");
     const actions = [
-      { view: "all", icon: "⌂", label: "Casa" },
-      ...scenes.map((scene) => ({ scene: scene.entity_id, icon: "✦", label: scene.name })),
+      { view: "all", icon: svgIcon("kitchen"), label: "Casa" },
+      ...scenes.map((scene) => ({ scene: scene.entity_id, icon: svgIcon("scene"), label: scene.name })),
       ...groups.map((group) => ({ view: "area", areaId: group.areaId, icon: group.icon, label: group.label })),
-      { view: "garage", icon: "▱", label: "Garagem" },
-      { view: "energy", icon: "ϟ", label: "Energia" },
+      { view: "garage", icon: svgIcon("garage"), label: "Garagem" },
+      { view: "energy", icon: svgIcon("energy"), label: "Energia" },
     ];
     $("#quick-actions").innerHTML = actions.map((action) => {
       const selected = action.view === state.view && (action.view !== "area" || action.areaId === state.areaId);
@@ -647,6 +700,41 @@
       return `<button class="quick-action ${selected ? "is-active" : ""}" data-view="${action.view}" data-area-id="${esc(action.areaId || "")}" type="button"><span>${action.icon}</span>${esc(action.label)}</button>`;
     }).join("");
   }
+
+  let draggedConfigRow = null;
+
+  document.addEventListener("dragstart", (event) => {
+    const row = event.target.closest?.(".config-entity-row");
+    if (!row) return;
+    draggedConfigRow = row;
+    row.classList.add("is-dragging");
+    event.dataTransfer?.setData("text/plain", row.dataset.configEntity || "");
+    if (event.dataTransfer) event.dataTransfer.effectAllowed = "move";
+  });
+
+  document.addEventListener("dragover", (event) => {
+    const target = event.target.closest?.(".config-entity-row");
+    if (!draggedConfigRow || !target || target === draggedConfigRow) return;
+    if (target.closest(".config-entity-list") !== draggedConfigRow.closest(".config-entity-list")) return;
+    event.preventDefault();
+    if (event.dataTransfer) event.dataTransfer.dropEffect = "move";
+  });
+
+  document.addEventListener("drop", (event) => {
+    const target = event.target.closest?.(".config-entity-row");
+    if (!draggedConfigRow || !target || target === draggedConfigRow) return;
+    if (target.closest(".config-entity-list") !== draggedConfigRow.closest(".config-entity-list")) return;
+    event.preventDefault();
+    target.parentElement.insertBefore(draggedConfigRow, target);
+    draggedConfigRow.classList.remove("is-dragging");
+    draggedConfigRow = null;
+    state.configDirty = true;
+  });
+
+  document.addEventListener("dragend", () => {
+    draggedConfigRow?.classList.remove("is-dragging");
+    draggedConfigRow = null;
+  });
 
   function cardHeader(entity) {
     return `
@@ -779,13 +867,191 @@
     $("#energy-metrics").innerHTML = `${metricCard("Geração solar", "generation")}${metricCard("Consumo da casa", "consumption")}${metricCard("Rede", "grid")}${metricCard("Bateria / reserva", "storage")}`;
   }
 
+  function garageEntitiesForDisplay() {
+    const discovered = state.payload?.garage?.entities || [];
+    const garageConfig = state.layout?.garage || {};
+    if (!garageConfig.manual) return discovered;
+    const selected = new Set(Array.isArray(garageConfig.entity_ids) ? garageConfig.entity_ids : []);
+    return discovered.filter((entity) => selected.has(entity.entity_id));
+  }
+
+  function vehicleEntityText(entity) {
+    return `${entity?.name || ""} ${entity?.entity_id || ""} ${entity?.device_name || ""}`.toLowerCase();
+  }
+
+  function firstVehicleEntity(entities, keywords) {
+    return entities.find((entity) => keywords.some((keyword) => vehicleEntityText(entity).includes(keyword)));
+  }
+
+  function vehicleValue(entity) {
+    if (!entity) return "—";
+    if (entity.numeric_value !== null && entity.numeric_value !== undefined) {
+      return `${entity.numeric_value}${entityUnit(entity) ? ` ${entityUnit(entity)}` : ""}`;
+    }
+    return humanState(entity);
+  }
+
+  function garageVehicleCard() {
+    const garageEntities = garageEntitiesForDisplay();
+    const all = [...garageEntities, ...allEntities().filter((entity) => !garageEntities.includes(entity))];
+    const hasVolvo = all.some((entity) => vehicleEntityText(entity).match(/volvo|xc40|ex40/));
+    const battery = firstVehicleEntity(all, ["nível de carga", "nivel de carga", "battery", "bateria", "state of charge", "soc"]);
+    const charging = firstVehicleEntity(all, ["estado do carregamento", "charging state", "carregando", "charge state"]);
+    const power = firstVehicleEntity(all, ["potência de carregamento", "potencia de carregamento", "charging power"]);
+    const connection = firstVehicleEntity(all, ["ligação ao carro", "ligacao ao carro", "car connection", "connection"]);
+    const vehicleName = hasVolvo
+      ? (all.some((entity) => vehicleEntityText(entity).includes("ex40")) ? "Volvo EX40" : "Volvo XC40")
+      : "Volvo XC40 / EX40";
+    const batteryPercent = battery?.numeric_value != null && entityUnit(battery) === "%"
+      ? Math.max(0, Math.min(100, Number(battery.numeric_value)))
+      : null;
+    const batteryLabel = batteryPercent === null ? vehicleValue(battery) : `${Math.round(batteryPercent)}%`;
+    return `
+      <article class="vehicle-card">
+        <div class="vehicle-card-art"><div class="vehicle-glow"></div><div class="vehicle-car-icon">${svgIcon("car")}</div><span>GARAGEM</span></div>
+        <div class="vehicle-card-body">
+          <div class="vehicle-card-title"><div><div class="eyebrow">CARRO ELÉTRICO</div><h3>${esc(vehicleName)}</h3><p>${hasVolvo ? "Dados espelhados do Home Assistant" : "Pronto para receber a entidade do veículo"}</p></div><span class="vehicle-battery-badge">${esc(batteryLabel)}</span></div>
+          <div class="vehicle-battery-track"><span style="width:${batteryPercent === null ? 0 : batteryPercent}%"></span></div>
+          <div class="vehicle-stats">
+            <div><span>Carregamento</span><strong>${esc(vehicleValue(charging))}</strong></div>
+            <div><span>Potência</span><strong>${esc(vehicleValue(power))}</strong></div>
+            <div><span>Ligação</span><strong>${esc(vehicleValue(connection))}</strong></div>
+          </div>
+        </div>
+      </article>
+    `;
+  }
+
   function renderGarage() {
     $("#page-title").textContent = "Garagem";
     $("#page-subtitle").textContent = "Carregamento, carro e acesso próximos deste ambiente.";
-    const entities = state.payload?.garage?.entities || [];
+    $("#garage-vehicle").innerHTML = garageVehicleCard();
+    const entities = garageEntitiesForDisplay();
     $("#garage-grid").innerHTML = entities.length
       ? entities.map(entityCard).join("")
       : `<div class="empty-state"><div><strong>Garagem ainda sem entidades mapeadas</strong><span>Nomeie a área ou entidade como garagem, carro, wallbox ou carregador no Home Assistant para ela aparecer aqui.</span></div></div>`;
+  }
+
+  function configAreas() {
+    return state.catalog?.areas || state.payload?.areas || [];
+  }
+
+  function configEntitiesForGroup(group) {
+    const explicitAreas = Array.isArray(group.area_ids) ? group.area_ids : [];
+    const areaIds = explicitAreas.length
+      ? explicitAreas
+      : configAreas().filter((area) => roomGroupKey(area) === group.key).map((area) => area.id);
+    const selectedIds = new Set(Array.isArray(group.entity_ids) ? group.entity_ids : []);
+    return allEntities().filter((entity) => areaIds.includes(entity.area_id) || selectedIds.has(entity.entity_id));
+  }
+
+  function orderedConfigEntities(entities, order) {
+    const byId = new Map(entities.map((entity) => [entity.entity_id, entity]));
+    const result = [];
+    const seen = new Set();
+    for (const entityId of Array.isArray(order) ? order : []) {
+      const entity = byId.get(entityId);
+      if (entity && !seen.has(entity.entity_id)) {
+        result.push(entity);
+        seen.add(entity.entity_id);
+      }
+    }
+    entities.forEach((entity) => {
+      if (!seen.has(entity.entity_id)) result.push(entity);
+    });
+    return result;
+  }
+
+  function configEntityRow(entity, checked) {
+    return `
+      <label class="config-entity-row" draggable="true" data-config-entity="${esc(entity.entity_id)}">
+        <span class="config-drag-handle" aria-hidden="true">⠿</span>
+        <input class="config-entity-check" type="checkbox" data-config-entity-check="${esc(entity.entity_id)}" ${checked ? "checked" : ""}>
+        <span class="config-entity-icon">${iconFor(entity)}</span>
+        <span class="config-entity-copy"><strong>${esc(friendlyEntityName(entity))}</strong><small>${esc(entity.domain)} · ${esc(entity.area_name || "Sem cômodo")}</small></span>
+        <span class="config-entity-state">${esc(humanState(entity))}</span>
+        <span class="config-move-buttons"><button type="button" data-config-move="up" aria-label="Mover para cima">↑</button><button type="button" data-config-move="down" aria-label="Mover para baixo">↓</button></span>
+      </label>
+    `;
+  }
+
+  function configRoomCard(group) {
+    const entities = orderedConfigEntities(configEntitiesForGroup(group), group.order);
+    const selectedIds = new Set(Array.isArray(group.entity_ids) ? group.entity_ids : []);
+    const automatic = !group.manual;
+    const areaIds = Array.isArray(group.area_ids) && group.area_ids.length
+      ? group.area_ids
+      : configAreas().filter((area) => roomGroupKey(area) === group.key).map((area) => area.id);
+    const sections = group.sections || {};
+    const section = (key, label, hint) => {
+      const rows = entities.filter((entity) => entitySection(entity) === key);
+      return `
+        <div class="config-section ${sections[key] === false ? "is-disabled" : ""}">
+          <label class="config-section-heading"><input type="checkbox" data-config-section="${esc(group.key)}:${key}" ${sections[key] === false ? "" : "checked"}><span><strong>${label}</strong><small>${hint}</small></span><b>${rows.length}</b></label>
+          <div class="config-entity-list" data-config-list="${esc(group.key)}:${key}">${rows.length ? rows.map((entity) => configEntityRow(entity, automatic || selectedIds.has(entity.entity_id))).join("") : `<div class="config-empty">Nenhuma entidade encontrada nesta categoria.</div>`}</div>
+        </div>
+      `;
+    };
+    return `
+      <article class="config-room-card" data-config-group="${esc(group.key)}">
+        <div class="config-room-heading"><div class="config-room-title"><span class="config-room-icon">${roomIcon(group.key)}</span><div><h3>${esc(group.label || group.key)}</h3><p>Selecione as áreas espelhadas e os equipamentos visíveis.</p></div></div><label class="config-toggle"><input type="checkbox" data-config-enabled ${group.enabled === false ? "" : "checked"}><span></span><b>Exibir</b></label></div>
+        <div class="config-area-block"><div class="config-label">ÁREAS ESPELHADAS</div><div class="config-area-choices">${configAreas().map((area) => `<label class="config-area-choice"><input type="checkbox" data-config-area="${esc(area.id)}" ${areaIds.includes(area.id) ? "checked" : ""}><span>${areaIcon(area)}</span>${esc(area.name)}</label>`).join("") || `<span class="config-empty">Nenhuma área descoberta.</span>`}</div></div>
+        <div class="config-sections">${section("lighting", "Iluminação e acionamentos", "Luzes, interruptores, ventilação e persianas")}${section("media", "Áudio e vídeo", "TVs, caixas e players")}${section("other", "Outros dispositivos", "Sensores, portões, cenas e controles auxiliares")}</div>
+      </article>
+    `;
+  }
+
+  function configGarageCard() {
+    const garageConfig = state.layout?.garage || {};
+    const entities = orderedConfigEntities(state.payload?.garage?.entities || [], garageConfig.order);
+    const selectedIds = new Set(Array.isArray(garageConfig.entity_ids) ? garageConfig.entity_ids : []);
+    const automatic = !garageConfig.manual;
+    return `
+      <article class="config-room-card config-garage-card" data-config-garage>
+        <div class="config-room-heading"><div class="config-room-title"><span class="config-room-icon">${roomIcon("garagem")}</span><div><h3>Dados da garagem</h3><p>Carregamento, portão e dados do Volvo XC40 / EX40.</p></div></div><label class="config-toggle"><input type="checkbox" data-config-garage-enabled ${garageConfig.enabled === false ? "" : "checked"}><span></span><b>Exibir</b></label></div>
+        <div class="config-entity-list" data-config-list="garage">${entities.length ? entities.map((entity) => configEntityRow(entity, automatic || selectedIds.has(entity.entity_id))).join("") : `<div class="config-empty">Nenhuma entidade de garagem encontrada.</div>`}</div>
+      </article>
+    `;
+  }
+
+  function renderConfig() {
+    $("#page-title").textContent = "Configurar painel";
+    $("#page-subtitle").textContent = "Cômodos, categorias e ordem dos dispositivos.";
+    const groups = Array.isArray(state.layout?.groups) ? state.layout.groups : [];
+    $("#config-rooms").innerHTML = groups.map(configRoomCard).join("") + configGarageCard();
+  }
+
+  function collectLayoutFromConfig() {
+    const groups = [...document.querySelectorAll("[data-config-group]")].map((card) => {
+      const key = card.dataset.configGroup;
+      const current = (state.layout?.groups || []).find((group) => group.key === key) || {};
+      const entityIds = [...card.querySelectorAll(".config-entity-check:checked")].map((input) => input.dataset.configEntityCheck);
+      return {
+        ...current,
+        key,
+        enabled: Boolean(card.querySelector("[data-config-enabled]")?.checked),
+        area_ids: [...card.querySelectorAll("[data-config-area]:checked")].map((input) => input.dataset.configArea),
+        manual: true,
+        entity_ids: entityIds,
+        order: entityIds,
+        sections: Object.fromEntries([...card.querySelectorAll("[data-config-section]")].map((input) => [input.dataset.configSection.split(":").pop(), input.checked])),
+      };
+    });
+    const garageCard = $("[data-config-garage]");
+    const garageIds = garageCard
+      ? [...garageCard.querySelectorAll(".config-entity-check:checked")].map((input) => input.dataset.configEntityCheck)
+      : [];
+    return {
+      version: 1,
+      groups,
+      garage: {
+        ...(state.layout?.garage || {}),
+        enabled: Boolean(garageCard?.querySelector("[data-config-garage-enabled]")?.checked),
+        manual: true,
+        entity_ids: garageIds,
+        order: garageIds,
+      },
+    };
   }
 
   function render() {
@@ -796,10 +1062,14 @@
     const room = $("#room-view");
     const energy = $("#energy-view");
     const garage = $("#garage-view");
+    const config = $("#config-view");
     room.classList.toggle("is-hidden", state.view !== "all" && state.view !== "area");
     energy.classList.toggle("is-hidden", state.view !== "energy");
     garage.classList.toggle("is-hidden", state.view !== "garage");
-    if (state.view === "energy") renderEnergy();
+    config.classList.toggle("is-hidden", state.view !== "config");
+    if (state.view === "config") {
+      if (!state.configDirty) renderConfig();
+    } else if (state.view === "energy") renderEnergy();
     else if (state.view === "garage") renderGarage();
     else renderRoom();
     $("#last-update").textContent = formatUpdated(state.payload.updated_at);
@@ -808,7 +1078,60 @@
   function selectViewButton(viewButton) {
     state.view = viewButton.dataset.view;
     state.areaId = viewButton.dataset.areaId || null;
+    state.configDirty = false;
     render();
+    if (state.view === "config") loadLayoutConfig();
+  }
+
+  async function loadLayoutConfig(showToast = false) {
+    try {
+      const response = await fetch("api/layout", { cache: "no-store" });
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      const body = await response.json();
+      state.layout = body.layout || state.layout;
+      state.catalog = body.catalog || state.catalog;
+      state.configDirty = false;
+      if (state.view === "config") render();
+      if (showToast) toast("Configuração carregada");
+    } catch (error) {
+      toast("Não foi possível carregar a configuração");
+      console.warn(error);
+    }
+  }
+
+  async function saveLayoutConfig() {
+    const layout = collectLayoutFromConfig();
+    try {
+      const response = await fetch("api/layout", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ layout }),
+      });
+      const body = await response.json();
+      if (!response.ok) throw new Error(body.detail || "Configuração recusada");
+      state.layout = body.layout || layout;
+      state.configDirty = false;
+      state.view = "all";
+      state.areaId = null;
+      await load(false);
+      toast("Layout salvo no Home Assistant");
+    } catch (error) {
+      toast(error.message || "Não foi possível salvar o layout");
+    }
+  }
+
+  async function resetLayoutConfig() {
+    try {
+      const response = await fetch("api/layout/reset", { method: "POST" });
+      const body = await response.json();
+      if (!response.ok) throw new Error(body.detail || "Configuração recusada");
+      state.layout = body.layout;
+      state.configDirty = false;
+      renderConfig();
+      toast("Seleção automática restaurada");
+    } catch (error) {
+      toast(error.message || "Não foi possível restaurar o layout");
+    }
   }
 
   async function load(showToast = false) {
@@ -819,6 +1142,8 @@
       const response = await fetch("api/dashboard", { cache: "no-store" });
       if (!response.ok) throw new Error(`HTTP ${response.status}`);
       state.payload = await response.json();
+      state.layout = state.payload.layout_config?.layout || state.layout;
+      state.catalog = state.payload.layout_config?.catalog || state.catalog;
       setConnection(true, "Home Assistant conectado");
       render();
       if (showToast) toast("Painel atualizado");
@@ -902,6 +1227,30 @@
       selectViewButton(viewButton);
       return;
     }
+    const configAction = event.target.closest("[data-config-action]");
+    if (configAction) {
+      event.preventDefault();
+      const action = configAction.dataset.configAction;
+      if (action === "save") saveLayoutConfig();
+      else if (action === "reload") loadLayoutConfig(true);
+      else if (action === "reset") resetLayoutConfig();
+      return;
+    }
+    const moveButton = event.target.closest("[data-config-move]");
+    if (moveButton) {
+      event.preventDefault();
+      event.stopPropagation();
+      const row = moveButton.closest(".config-entity-row");
+      const direction = moveButton.dataset.configMove;
+      if (row && direction === "up" && row.previousElementSibling) {
+        row.parentElement.insertBefore(row, row.previousElementSibling);
+        state.configDirty = true;
+      } else if (row && direction === "down" && row.nextElementSibling) {
+        row.parentElement.insertBefore(row.nextElementSibling, row);
+        state.configDirty = true;
+      }
+      return;
+    }
     const sceneButton = event.target.closest('[data-action="scene"]');
     if (sceneButton) {
       activateScene(sceneButton.dataset.id);
@@ -940,6 +1289,7 @@
   });
 
   document.addEventListener("change", (event) => {
+    if (event.target.closest("#config-view")) state.configDirty = true;
     const source = event.target.closest('[data-action="source"]');
     if (source && source.value) sendAction(source.dataset.id, "source", source.value);
     const volume = event.target.closest('[data-action="volume"]');

@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.6.0
+
+- Adiciona configuração persistente de cômodos, categorias e ordem dos dispositivos.
+- Permite selecionar áreas e entidades pela própria tela, com arrastar, setas e salvamento.
+- Inclui cartão preparado para Volvo XC40/EX40, bateria, carregamento, potência e conexão.
+- Corrige o shell do quiosque para esconder a barra lateral do Home Assistant mesmo após mudanças no DOM.
+
 ## 0.5.0
 
 - Aproxima os cards de cômodos do mockup aprovado com ícones dedicados, nomes mais curtos e seleção de dispositivos por prioridade visual.

@@ -12,13 +12,15 @@ from pydantic import BaseModel, Field
 from .dashboard import build_dashboard, execute_entity_action
 from .ha_client import HomeAssistantClient, HomeAssistantError
 from .immich import ImmichError, ImmichPhotoFrame
+from .layout_config import DisplayLayoutStore
 
 WEB_DIR = Path(__file__).resolve().parents[1] / "web"
 client = HomeAssistantClient.from_env()
 photo_frame = ImmichPhotoFrame.from_env()
 
-app = FastAPI(title="Tecnohead Display", version="0.5.0")
+app = FastAPI(title="Tecnohead Display", version="0.6.0")
 app.mount("/static", StaticFiles(directory=WEB_DIR / "static"), name="static")
+layout_store = DisplayLayoutStore()
 
 
 class EntityAction(BaseModel):
@@ -29,6 +31,10 @@ class EntityAction(BaseModel):
 
 class SceneAction(BaseModel):
     entity_id: str = Field(min_length=3, max_length=255)
+
+
+class LayoutRequest(BaseModel):
+    layout: dict[str, object]
 
 
 @app.get("/", include_in_schema=False)
@@ -44,11 +50,33 @@ async def health() -> dict[str, str]:
 @app.get("/api/dashboard")
 async def dashboard() -> dict[str, object]:
     try:
-        payload = await build_dashboard(client)
+        payload = await build_dashboard(client, layout_store.load())
         payload["photo_frame"] = photo_frame.public_config()
         return payload
     except HomeAssistantError as exc:
         raise HTTPException(status_code=502, detail=str(exc)) from exc
+
+
+@app.get("/api/layout")
+async def layout() -> dict[str, object]:
+    try:
+        payload = await build_dashboard(client, layout_store.load())
+        return {
+            "layout": payload["layout_config"]["layout"],
+            "catalog": payload["layout_config"]["catalog"],
+        }
+    except HomeAssistantError as exc:
+        raise HTTPException(status_code=502, detail=str(exc)) from exc
+
+
+@app.put("/api/layout")
+async def save_layout(payload: LayoutRequest) -> dict[str, object]:
+    return {"layout": layout_store.save(payload.layout)}
+
+
+@app.post("/api/layout/reset")
+async def reset_layout() -> dict[str, object]:
+    return {"layout": layout_store.reset()}
 
 
 @app.post("/api/entities/action")

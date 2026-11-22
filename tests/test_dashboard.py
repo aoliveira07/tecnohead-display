@@ -9,6 +9,7 @@ from tecnohead_display.app.dashboard import (
     is_garage_related,
     safe_attributes,
 )
+from tecnohead_display.app.layout_config import DisplayLayoutStore
 
 
 class FakeHomeAssistant:
@@ -93,6 +94,34 @@ def test_dashboard_groups_areas_and_exposes_only_safe_attributes():
     assert payload["energy"]["metrics"]["generation"][0]["numeric_value"] == 2.4
     assert payload["garage"]["entities"][0]["name"] == "Wallbox"
     assert "secret_attribute" not in payload["areas"][0]["entities"][0]["attributes"]
+    assert payload["layout_config"]["layout"]["groups"][0]["key"] == "cozinha"
+    assert payload["layout_config"]["catalog"]["areas"][0]["entities"]
+
+
+def test_layout_store_persists_only_known_layout_fields(tmp_path):
+    store = DisplayLayoutStore(tmp_path / "display-layout.json")
+    saved = store.save(
+        {
+            "groups": [
+                {
+                    "key": "cozinha",
+                    "area_ids": ["cozinha"],
+                    "manual": True,
+                    "entity_ids": ["light.cozinha"],
+                    "order": ["light.cozinha"],
+                    "sections": {"lighting": True, "media": False, "other": False},
+                }
+            ],
+            "garage": {"manual": True, "entity_ids": ["sensor.carro"], "unexpected": "ignored"},
+            "unexpected": "ignored",
+        }
+    )
+
+    loaded = store.load()
+    assert saved == loaded
+    assert loaded["groups"][0]["area_ids"] == ["cozinha"]
+    assert loaded["groups"][0]["sections"]["media"] is False
+    assert "unexpected" not in loaded
 
 
 def test_actions_are_limited_to_known_home_assistant_services():
