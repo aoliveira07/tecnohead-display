@@ -979,7 +979,12 @@
 
   function vehicleControlButton(entity, command, label, extra = "") {
     if (!entity) return "";
-    return `<button class="vehicle-action ${extra}" data-action="entity" data-id="${esc(entity.entity_id)}" data-command="${esc(command)}" type="button">${esc(label)}</button>`;
+    const icon = /climat|clima/i.test(label)
+      ? svgIcon("climate")
+      : ["lock", "unlock"].includes(command)
+        ? svgIcon("lock")
+        : svgIcon("button");
+    return `<button class="vehicle-action ${extra}" data-action="entity" data-id="${esc(entity.entity_id)}" data-command="${esc(command)}" type="button">${icon}<span>${esc(label)}</span></button>`;
   }
 
   function vehicleActionButton(entity, label, extra = "") {
@@ -1020,6 +1025,7 @@
       ? Math.max(0, Math.min(100, Number(battery.numeric_value)))
       : null;
     const batteryLabel = batteryPercent === null ? vehicleValue(battery) : `${Math.round(batteryPercent)}%`;
+    const rangeLabel = vehicleValue(range);
     const chargingLabel = vehicleChargingState(charging, "Não carregando");
     const connectionLabel = vehicleConnectionState(connection, hasVolvo ? "Conectado" : "Aguardando veículo");
     const openDoors = doors.filter((entity) => vehicleClosed(entity) === false);
@@ -1033,10 +1039,10 @@
     const lockClass = String(lock?.state || "").toLowerCase() === "unlocked" ? "is-warning" : "is-ok";
     return `
       <article class="vehicle-card ${hasVolvo ? "is-linked" : "is-placeholder"}">
-        <div class="vehicle-card-art"><div class="vehicle-art-top"><span>VOLVO</span><span class="vehicle-connection ${connection ? "is-online" : ""}">${esc(connectionLabel)}</span></div><div class="vehicle-glow"></div><div class="vehicle-car-icon">${svgIcon("car")}</div><div class="vehicle-art-caption"><strong>${esc(vehicleName)}</strong><small>GARAGEM</small></div></div>
+        <div class="vehicle-card-art"><div class="vehicle-art-top"><span>VOLVO</span><span class="vehicle-connection ${connection ? "is-online" : ""}">${esc(connectionLabel)}</span></div><div class="vehicle-glow"></div><div class="vehicle-car-image"><img src="static/assets/volvo-ex40.jpg" alt="Volvo EX40 cinza"></div><div class="vehicle-art-caption"><strong>${esc(vehicleName)}</strong><small>GARAGEM</small></div></div>
         <div class="vehicle-card-body">
           <div class="vehicle-card-title"><div><div class="eyebrow">CARRO ELÉTRICO</div><h3>${esc(vehicleName)}</h3><p>${hasVolvo ? "Dados espelhados do Home Assistant" : "Pronto para receber a entidade do veículo"}</p></div><span class="vehicle-status-pill ${vehicleActive(charging) ? "is-charging" : ""}">${esc(chargingLabel)}</span></div>
-          <div class="vehicle-battery-row"><span>Bateria</span><strong>${esc(batteryLabel)}</strong><small>${esc(vehicleValue(range))}</small></div>
+          <div class="vehicle-battery-row"><span>Bateria</span><strong>${esc(batteryLabel)}</strong><small>${esc(rangeLabel === "—" ? "Autonomia sem leitura" : `${rangeLabel} autonomia`)}</small></div>
           <div class="vehicle-battery-track"><span style="width:${batteryPercent === null ? 0 : batteryPercent}%"></span></div>
           <div class="vehicle-stats">
             <div><span>Odômetro</span><strong>${esc(vehicleValue(odometer))}</strong></div>

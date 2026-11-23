@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.6.9
+
+- substitui a silhueta por uma imagem real do Volvo EX40 cinza, recortada da referência enviada;
+- aproxima o card da linguagem visual do aplicativo da Volvo, com leitura de bateria mais destacada e ações com ícones.
+
 ## 0.6.8
 
 - adiciona card compacto da Volvo na Garagem, com bateria, autonomia, odômetro, carregamento e conexão;
