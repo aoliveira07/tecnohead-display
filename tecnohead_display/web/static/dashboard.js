@@ -506,6 +506,7 @@
   }
 
   function displayTile(entity) {
+    if (entity.domain === "climate") return climateTile(entity);
     const clickable = ["light", "switch", "fan", "input_boolean"].includes(entity.domain);
     const detail = entity.domain === "media_player"
       ? entityAttributes(entity).media_title || humanState(entity)
@@ -853,6 +854,7 @@
 
   function entityCard(entity) {
     if (entity.domain === "media_player") return mediaCard(entity);
+    if (entity.domain === "climate") return climateTile(entity);
     if (["light", "switch", "fan", "input_boolean", "cover", "lock", "button"].includes(entity.domain)) return controlCard(entity);
     return readOnlyCard(entity);
   }
@@ -888,31 +890,70 @@
     return labels[String(mode || "").toLowerCase()] || mode || "Sem leitura";
   }
 
+  function climateCurrent(entity) {
+    const value = Number(entityAttributes(entity).current_temperature);
+    return Number.isFinite(value) ? value : null;
+  }
+
+  function climateTarget(entity) {
+    const attributes = entityAttributes(entity);
+    const value = Number(attributes.target_temperature ?? attributes.temperature);
+    return Number.isFinite(value) ? value : null;
+  }
+
+  function climateIsOff(entity) {
+    const attributes = entityAttributes(entity);
+    return String(attributes.hvac_mode || entity?.state || "").toLowerCase() === "off";
+  }
+
+  function climateTile(entity) {
+    const current = climateCurrent(entity);
+    const mode = climateModeLabel(entityAttributes(entity).hvac_mode || entity.state);
+    return `
+      <article class="display-tile climate-display-tile is-touchable" data-view="solution" data-solution="climate" role="button" tabindex="0" aria-label="Abrir controles de clima">
+        <div class="tile-top"><div class="tile-icon">${svgIcon("climate")}</div><span class="climate-tile-status">${esc(mode)}</span></div>
+        <div class="climate-tile-current">${esc(temperatureText(current, "—"))}</div>
+        <div class="tile-name">Ar</div>
+        <div class="tile-state">${esc(mode)}</div>
+      </article>
+    `;
+  }
+
   function climateShowcase(entities) {
     if (!entities.length) {
       return `<section class="apple-showcase"><div class="showcase-heading"><span class="showcase-heading-icon">${svgIcon("climate")}</span><span>Clima</span></div><div class="solution-empty">Nenhum equipamento de clima encontrado.</div></section>`;
     }
     const entity = entities[0];
     const attributes = entityAttributes(entity);
-    const current = attributes.current_temperature ?? attributes.temperature;
-    const target = attributes.target_temperature ?? attributes.temperature;
-    const numericTarget = Number(target);
-    const level = Number.isFinite(numericTarget) ? Math.max(0, Math.min(100, ((numericTarget - 16) / 16) * 100)) : 0;
+    const current = climateCurrent(entity);
+    const target = climateTarget(entity);
+    const minimum = Number(attributes.min_temp);
+    const maximum = Number(attributes.max_temp);
+    const minTemp = Number.isFinite(minimum) ? minimum : 16;
+    const maxTemp = Number.isFinite(maximum) ? maximum : 32;
+    const numericTarget = Number.isFinite(target) ? target : Math.round((minTemp + maxTemp) / 2);
+    const level = Math.max(0, Math.min(100, ((numericTarget - minTemp) / Math.max(1, maxTemp - minTemp)) * 100));
+    const angle = Math.round(level * 3.6);
+    const mode = climateModeLabel(attributes.hvac_mode || entity.state);
+    const off = climateIsOff(entity);
     const modes = Array.isArray(attributes.hvac_modes) ? attributes.hvac_modes.slice(0, 4) : [];
+    const modeOptions = modes.length ? modes : [attributes.hvac_mode || entity.state].filter(Boolean);
     return `
       <section class="apple-showcase climate-showcase">
         <div class="showcase-heading"><span class="showcase-heading-icon">${svgIcon("climate")}</span><span>Clima</span></div>
         <div class="solution-card-name">${esc(friendlyEntityName(entity))}</div>
-        <div class="solution-card-subtitle">Atual: ${esc(temperatureText(current, "Sem leitura"))}</div>
-        <div class="climate-dial" style="--dial-level:${level}%">
-          <div class="climate-dial-copy"><small>${esc(climateModeLabel(attributes.hvac_mode || entity.state))}</small><strong>${esc(temperatureText(target, temperatureText(current, "—")))}</strong><span>alvo</span></div>
+        <div class="solution-card-subtitle">Ambiente: ${esc(temperatureText(current, "Sem leitura"))}</div>
+        <div class="climate-dial climate-dial-interactive" data-climate-dial data-id="${esc(entity.entity_id)}" data-min="${minTemp}" data-max="${maxTemp}" data-value="${numericTarget}" data-mode="${esc(String(attributes.hvac_mode || entity.state || ""))}" style="--dial-level:${level}%;--dial-angle:${angle}deg" aria-label="Ajustar temperatura alvo">
+          <div class="climate-dial-orbit"><button class="climate-dial-handle" type="button" tabindex="-1" aria-label="Arraste para ajustar a temperatura"></button></div>
+          <div class="climate-dial-copy"><small>${esc(mode)}</small><strong data-climate-target>${off ? esc(mode) : esc(temperatureText(numericTarget))}</strong><span data-climate-reading>${off ? `Ambiente ${esc(temperatureText(current, "—"))}` : `Alvo · ambiente ${esc(temperatureText(current, "—"))}`}</span></div>
         </div>
+        <div class="climate-reading-row"><span>Ambiente <b>${esc(temperatureText(current, "—"))}</b></span><span>Alvo <b data-climate-stepper-value>${esc(temperatureText(numericTarget))}</b></span></div>
+        <div class="climate-mode-selector"><span>Modo</span><select class="climate-mode-select" data-action="climate-mode" data-id="${esc(entity.entity_id)}" aria-label="Modo do clima">${modeOptions.map((modeOption) => `<option value="${esc(modeOption)}" ${String(attributes.hvac_mode || entity.state) === String(modeOption) ? "selected" : ""}>${esc(climateModeLabel(modeOption))}</option>`).join("")}</select></div>
         <div class="climate-controls">
-          <button class="small-action" data-action="entity" data-id="${esc(entity.entity_id)}" data-command="set_temperature" data-value="${Number.isFinite(numericTarget) ? Math.max(16, numericTarget - 1) : 22}" type="button">−</button>
-          <span>${esc(temperatureText(target, "—"))}</span>
-          <button class="small-action" data-action="entity" data-id="${esc(entity.entity_id)}" data-command="set_temperature" data-value="${Number.isFinite(numericTarget) ? Math.min(32, numericTarget + 1) : 24}" type="button">+</button>
+          <button class="small-action" data-action="entity" data-id="${esc(entity.entity_id)}" data-command="set_temperature" data-value="${Math.max(minTemp, numericTarget - 0.5)}" type="button">−</button>
+          <span data-climate-stepper-value>${esc(temperatureText(numericTarget))}</span>
+          <button class="small-action" data-action="entity" data-id="${esc(entity.entity_id)}" data-command="set_temperature" data-value="${Math.min(maxTemp, numericTarget + 0.5)}" type="button">+</button>
         </div>
-        ${modes.length ? `<div class="climate-modes">${modes.map((mode) => `<button class="mode-chip ${String(attributes.hvac_mode) === String(mode) ? "is-selected" : ""}" data-action="entity" data-id="${esc(entity.entity_id)}" data-command="set_hvac_mode" data-value="${esc(mode)}" type="button">${esc(climateModeLabel(mode))}</button>`).join("")}</div>` : ""}
       </section>
     `;
   }
@@ -1510,6 +1551,71 @@
     }
   }
 
+  let activeClimateDrag = null;
+
+  function climateDialReading(dial, clientX, clientY) {
+    const rect = dial.getBoundingClientRect();
+    const centerX = rect.left + rect.width / 2;
+    const centerY = rect.top + rect.height / 2;
+    const angle = (Math.atan2(clientY - centerY, clientX - centerX) * 180 / Math.PI + 90 + 360) % 360;
+    const min = Number(dial.dataset.min) || 16;
+    const max = Number(dial.dataset.max) || 32;
+    const value = Math.round((min + (max - min) * angle / 360) * 2) / 2;
+    return {
+      angle,
+      level: Math.max(0, Math.min(100, angle / 360 * 100)),
+      value: Math.max(min, Math.min(max, value)),
+    };
+  }
+
+  function paintClimateDial(dial, reading) {
+    dial.style.setProperty("--dial-level", `${reading.level}%`);
+    dial.style.setProperty("--dial-angle", `${reading.angle}deg`);
+    dial.dataset.value = String(reading.value);
+    const mode = String(dial.dataset.mode || "").toLowerCase();
+    const target = dial.querySelector("[data-climate-target]");
+    if (target && mode !== "off") target.textContent = temperatureText(reading.value);
+    dial.parentElement?.querySelectorAll("[data-climate-stepper-value]").forEach((element) => {
+      element.textContent = temperatureText(reading.value);
+    });
+  }
+
+  function finishClimateDrag(cancelled = false) {
+    if (!activeClimateDrag) return;
+    const { dial, pointerId, entityId, value } = activeClimateDrag;
+    activeClimateDrag = null;
+    dial.classList.remove("is-dragging");
+    try { dial.releasePointerCapture(pointerId); } catch (_) { /* capture may already be released */ }
+    if (!cancelled) sendAction(entityId, "set_temperature", value);
+  }
+
+  document.addEventListener("pointerdown", (event) => {
+    const dial = event.target.closest?.("[data-climate-dial]");
+    if (!dial) return;
+    event.preventDefault();
+    const reading = climateDialReading(dial, event.clientX, event.clientY);
+    activeClimateDrag = { dial, pointerId: event.pointerId, entityId: dial.dataset.id, value: reading.value };
+    dial.classList.add("is-dragging");
+    try { dial.setPointerCapture(event.pointerId); } catch (_) { /* pointer capture is optional */ }
+    paintClimateDial(dial, reading);
+  }, { passive: false });
+
+  document.addEventListener("pointermove", (event) => {
+    if (!activeClimateDrag || event.pointerId !== activeClimateDrag.pointerId) return;
+    event.preventDefault();
+    const reading = climateDialReading(activeClimateDrag.dial, event.clientX, event.clientY);
+    activeClimateDrag.value = reading.value;
+    paintClimateDial(activeClimateDrag.dial, reading);
+  }, { passive: false });
+
+  document.addEventListener("pointerup", (event) => {
+    if (activeClimateDrag && event.pointerId === activeClimateDrag.pointerId) finishClimateDrag();
+  });
+
+  document.addEventListener("pointercancel", (event) => {
+    if (activeClimateDrag && event.pointerId === activeClimateDrag.pointerId) finishClimateDrag(true);
+  });
+
   async function activateScene(entityId) {
     try {
       const response = await fetch("api/scenes/activate", {
@@ -1616,6 +1722,8 @@
 
   document.addEventListener("change", (event) => {
     if (event.target.closest("#config-view")) state.configDirty = true;
+    const climateMode = event.target.closest('[data-action="climate-mode"]');
+    if (climateMode && climateMode.value) sendAction(climateMode.dataset.id, "set_hvac_mode", climateMode.value, climateMode);
     const source = event.target.closest('[data-action="source"]');
     if (source && source.value) sendAction(source.dataset.id, "source", source.value);
     const volume = event.target.closest('[data-action="volume"]');

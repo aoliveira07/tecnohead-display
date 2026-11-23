@@ -1,8 +1,10 @@
 # Changelog
 
-## 0.7.1
+## 0.8.0
 
-- Adiciona watchdog do Supervisor no endpoint `/health` para reiniciar automaticamente o app se o processo cair.
+- Mantém o watchdog do Supervisor no endpoint `/health` para reiniciar automaticamente o app se o processo cair.
+- Mostra a temperatura ambiente no card fechado de clima.
+- Adiciona seletor de modo e ajuste circular arrastável para a temperatura-alvo.
 
 ## 0.7.0
 
