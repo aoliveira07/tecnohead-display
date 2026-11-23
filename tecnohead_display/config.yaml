@@ -1,5 +1,5 @@
 name: Tecnohead Display
-version: "0.7.0"
+version: "0.7.1"
 slug: tecnohead_display
 description: Painel touch Tecnohead em grafite para controlar o Home Assistant.
 url: https://github.com/aoliveira07/tecnohead-display
@@ -11,6 +11,7 @@ boot: auto
 init: true
 ingress: true
 ingress_port: 8099
+watchdog: "http://[HOST]:8099/health"
 panel_icon: mdi:monitor-dashboard
 panel_title: Tecnohead Display
 panel_admin: false

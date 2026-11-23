@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.7.1
+
+- Adiciona watchdog do Supervisor no endpoint `/health` para reiniciar automaticamente o app se o processo cair.
+
 ## 0.7.0
 
 - adiciona tela de Câmeras com pré-visualizações ao vivo via proxy autenticado do Home Assistant;
