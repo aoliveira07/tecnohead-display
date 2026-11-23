@@ -1,10 +1,10 @@
 # Changelog
 
-## 0.8.0
+## 0.9.0
 
 - Mantém o watchdog do Supervisor no endpoint `/health` para reiniciar automaticamente o app se o processo cair.
-- Mostra a temperatura ambiente no card fechado de clima.
-- Adiciona seletor de modo e ajuste circular arrastável para a temperatura-alvo.
+- Reestiliza o controle de clima para o modelo Apple/HomeKit, sem graus redundantes abaixo do dial.
+- Usa arco de 270 graus, bolinha de ajuste suave e seletor de modo em menu próprio.
 
 ## 0.7.0
 

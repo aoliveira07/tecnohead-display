@@ -1038,22 +1038,26 @@ body { background: #20252b; }
 .apple-showcase .showcase-heading-icon .icon-svg { width: 22px; height: 22px; }
 .solution-card-name { margin-top: 5px; color: var(--ink); font-size: 14px; font-weight: 750; }
 .solution-card-subtitle { margin-top: 3px; color: var(--muted); font-size: 10px; }
-.climate-dial { position: relative; display: grid; width: min(214px, 88%); aspect-ratio: 1; margin: 16px auto 9px; place-items: center; border-radius: 50%; background: conic-gradient(from -90deg, var(--orange) var(--dial-level), rgba(255, 255, 255, 0.16) 0); cursor: grab; touch-action: none; user-select: none; }
+.climate-dial { position: relative; display: grid; width: min(214px, 88%); aspect-ratio: 1; margin: 16px auto 9px; place-items: center; border-radius: 50%; background: conic-gradient(from 225deg, var(--dial-accent) 0 var(--dial-sweep), rgba(255, 255, 255, 0.18) var(--dial-sweep) 270deg, transparent 270deg 360deg); cursor: grab; touch-action: none; user-select: none; }
 .climate-dial:active, .climate-dial.is-dragging { cursor: grabbing; }
+.climate-dial.is-off { background: conic-gradient(from 225deg, rgba(255, 255, 255, 0.18) 0 270deg, transparent 270deg 360deg); cursor: default; }
 .climate-dial::before { position: absolute; inset: 10px; border-radius: inherit; content: ""; background: #303840; }
 .climate-dial-orbit { position: absolute; inset: 10px; z-index: 2; border-radius: 50%; pointer-events: none; transform: rotate(var(--dial-angle)); }
-.climate-dial-handle { position: absolute; top: -8px; left: calc(50% - 10px); width: 20px; height: 20px; padding: 0; border: 3px solid #f8fafb; border-radius: 50%; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35); background: var(--orange); pointer-events: none; }
+.climate-dial-handle { position: absolute; top: -8px; left: calc(50% - 10px); width: 20px; height: 20px; padding: 0; border: 3px solid #f8fafb; border-radius: 50%; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35); background: var(--dial-accent); pointer-events: none; }
+.climate-dial.is-off .climate-dial-handle { border-width: 2px; background: #f5f8fa; }
 .climate-dial-copy { position: relative; z-index: 1; display: flex; align-items: center; flex-direction: column; text-align: center; }
 .climate-dial-copy small { color: var(--muted); font-size: 9px; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; }
 .climate-dial-copy strong { max-width: 90%; margin-top: 4px; color: var(--ink); font-size: 29px; letter-spacing: -0.06em; line-height: 1; }
-.climate-dial-copy span { margin-top: 5px; color: var(--quiet); font-size: 10px; }
-.climate-reading-row { display: flex; justify-content: space-between; gap: 12px; margin: 0 11px 10px; color: var(--muted); font-size: 10px; }
-.climate-reading-row b { color: var(--ink); font-size: 12px; }
-.climate-mode-selector { display: flex; align-items: center; justify-content: space-between; gap: 10px; min-height: 36px; margin-top: 4px; padding: 0 10px 0 12px; border: 1px solid rgba(255, 255, 255, 0.13); border-radius: 999px; color: var(--muted); font-size: 10px; background: rgba(255, 255, 255, 0.06); }
-.climate-mode-select { min-width: 0; padding: 5px 22px 5px 7px; border: 0; color: var(--ink); cursor: pointer; font: inherit; font-weight: 750; text-align: right; background: transparent; }
-.climate-mode-select option { color: #20252a; background: #eef0f2; }
-.climate-controls { display: flex; align-items: center; justify-content: center; gap: 9px; margin-top: 9px; color: var(--ink); font-size: 12px; }
-.climate-controls .small-action { min-width: 31px; min-height: 30px; padding: 0 8px; }
+.climate-dial-reading { display: inline-flex; align-items: center; gap: 4px; margin-top: 10px; color: var(--quiet); font-size: 11px; }
+.climate-dial-reading .icon-svg { width: 13px; height: 13px; color: var(--muted); }
+.climate-mode-picker { position: relative; margin-top: 13px; }
+.climate-mode-button { display: flex; width: 100%; min-height: 38px; align-items: center; gap: 10px; padding: 0 12px; border: 1px solid rgba(255, 255, 255, 0.16); border-radius: 999px; color: var(--muted); cursor: pointer; font: inherit; font-size: 10px; text-align: left; background: rgba(255, 255, 255, 0.06); }
+.climate-mode-button strong { margin-left: auto; color: var(--ink); font-size: 11px; }
+.climate-mode-chevron { margin-left: 2px; color: var(--ink); font-size: 17px; line-height: 1; transform: translateY(-2px); }
+.climate-mode-menu { position: absolute; right: 0; bottom: calc(100% + 8px); left: 0; z-index: 10; overflow: hidden; padding: 5px; border: 1px solid rgba(255, 255, 255, 0.20); border-radius: 16px; background: rgba(233, 224, 211, 0.98); box-shadow: 0 14px 30px rgba(0, 0, 0, 0.32); }
+.climate-mode-option { display: flex; width: 100%; min-height: 35px; align-items: center; gap: 8px; padding: 0 10px; border: 0; border-radius: 10px; color: #20252a; cursor: pointer; font: inherit; font-size: 11px; text-align: left; background: transparent; }
+.climate-mode-option > span { width: 15px; color: #20252a; font-weight: 800; }
+.climate-mode-option:hover, .climate-mode-option.is-selected { background: rgba(255, 255, 255, 0.58); }
 .climate-modes { display: flex; flex-wrap: wrap; justify-content: center; gap: 5px; margin-top: 10px; }
 .mode-chip { min-height: 27px; padding: 0 8px; border: 1px solid rgba(255, 255, 255, 0.13); border-radius: 999px; color: var(--muted); cursor: pointer; font-size: 9px; background: rgba(255, 255, 255, 0.06); }
 .mode-chip.is-selected { border-color: rgba(255, 173, 84, 0.48); color: #26170e; background: var(--orange); }
