@@ -86,6 +86,20 @@ GARAGE_KEYWORDS = (
     "volvo",
     "xc40",
     "ex40",
+    "odometer",
+    "odômetro",
+    "odometro",
+    "quilometragem",
+    "door",
+    "porta",
+    "window",
+    "vidro",
+    "lock",
+    "tranca",
+    "climat",
+    "preheat",
+    "warning",
+    "alerta",
 )
 ENTITY_ID_RE = re.compile(r"^[a-z0-9_]+\.[a-z0-9_]+$")
 
@@ -308,7 +322,7 @@ async def build_dashboard(
             garage.append(entity)
 
     return {
-        "app": {"name": "Tecnohead Display", "version": "0.6.7"},
+        "app": {"name": "Tecnohead Display", "version": "0.6.8"},
         "home": {"name": str(config.get("location_name") or "Casa")},
         "areas": areas,
         "scenes": scenes,

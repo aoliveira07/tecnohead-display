@@ -328,9 +328,9 @@
     const text = vehicleEntityText(entity);
     if (["light", "switch", "fan", "cover", "lock", "button"].includes(entity?.domain)) return true;
     if (/\b(volvo|xc40|ex40)\b/.test(text)) {
-      return /bater(?:ia|y)|n[ií]vel de carga|state of charge|\bsoc\b|estado do carregamento|charging state|pot[eê]ncia de carregamento|charging power|liga[cç][aã]o ao carro|car connection/.test(text);
+      return /bater(?:ia|y)|n[ií]vel de carga|state of charge|\bsoc\b|estado do carregamento|charging state|pot[eê]ncia de carregamento|charging power|liga[cç][aã]o ao carro|car connection|odometer|od[oô]metro|quilometragem|door|porta|window|vidro|lock|tranca|climat|preheat|warning|alerta/.test(text);
     }
-    return /carga ring|charge control|carregamento|availability|disponibilidade|port[aã]o|gate|destravar|unlock/.test(text);
+    return /carga ring|charge control|carregamento|availability|disponibilidade|port[aã]o|gate|destravar|unlock|odometer|od[oô]metro|quilometragem|door|porta|window|vidro|lock|tranca|climat|preheat|warning|alerta/.test(text);
   }
 
   function renderRoomList() {
@@ -894,29 +894,125 @@
   }
 
   function vehicleEntityText(entity) {
-    return `${entity?.name || ""} ${entity?.entity_id || ""} ${entity?.device_name || ""}`.toLowerCase();
+    return `${entity?.name || ""} ${entity?.entity_id || ""} ${entity?.device_name || ""} ${entity?.area_name || ""}`.toLowerCase();
   }
 
   function firstVehicleEntity(entities, keywords) {
-    return entities.find((entity) => keywords.some((keyword) => vehicleEntityText(entity).includes(keyword)));
+    const matches = entities.filter((entity) => keywords.some((keyword) => vehicleEntityText(entity).includes(keyword)));
+    return matches.sort((left, right) => {
+      const leftScore = keywords.findIndex((keyword) => vehicleEntityText(left).includes(keyword));
+      const rightScore = keywords.findIndex((keyword) => vehicleEntityText(right).includes(keyword));
+      return leftScore - rightScore;
+    })[0];
+  }
+
+  function vehicleEntities(entities, keywords) {
+    return entities.filter((entity) => keywords.some((keyword) => vehicleEntityText(entity).includes(keyword)));
+  }
+
+  function vehicleState(entity, fallback = "Sem leitura") {
+    if (!entity) return fallback;
+    const raw = String(entity.state ?? "").trim().toLowerCase();
+    const labels = {
+      charging: "Carregando",
+      charging_system_charging: "Carregando",
+      not_charging: "Não carregando",
+      connected: "Conectado",
+      disconnected: "Desconectado",
+      locked: "Trancado",
+      unlocked: "Destrancado",
+      on: "Ativo",
+      off: "Inativo",
+      open: "Aberto",
+      closed: "Fechado",
+      unavailable: "Indisponível",
+      unknown: "Sem leitura",
+    };
+    return labels[raw] || humanState(entity);
+  }
+
+  function vehicleChargingState(entity, fallback = "Não carregando") {
+    if (!entity) return fallback;
+    const raw = String(entity.state ?? "").trim().toLowerCase();
+    if (raw === "on") return "Carregando";
+    if (raw === "off") return "Não carregando";
+    return vehicleState(entity, fallback);
+  }
+
+  function vehicleConnectionState(entity, fallback = "Aguardando veículo") {
+    if (!entity) return fallback;
+    const raw = String(entity.state ?? "").trim().toLowerCase();
+    if (["on", "connected", "available"].includes(raw)) return "Conectado";
+    if (["off", "disconnected", "unavailable"].includes(raw)) return "Desconectado";
+    return vehicleState(entity, fallback);
+  }
+
+  function vehicleNumericValue(entity, fallback = "—") {
+    if (!entity) return fallback;
+    if (entity.numeric_value !== null && entity.numeric_value !== undefined) {
+      const numeric = Number(entity.numeric_value);
+      const value = Number.isInteger(numeric)
+        ? numeric.toLocaleString("pt-BR")
+        : numeric.toLocaleString("pt-BR", { maximumFractionDigits: 1 });
+      return `${value}${entityUnit(entity) ? ` ${entityUnit(entity)}` : ""}`;
+    }
+    return vehicleState(entity, fallback);
+  }
+
+  function vehicleActive(entity) {
+    return ["on", "open", "unlocked", "charging", "charging_system_charging", "true"].includes(
+      String(entity?.state ?? "").trim().toLowerCase(),
+    );
+  }
+
+  function vehicleClosed(entity) {
+    if (!entity) return null;
+    const raw = String(entity.state ?? "").trim().toLowerCase();
+    if (["off", "closed", "false", "0"].includes(raw)) return true;
+    if (["on", "open", "true", "1"].includes(raw)) return false;
+    return null;
+  }
+
+  function vehicleStatusChip(kind, label, stateClass = "is-ok") {
+    return `<span class="vehicle-status-chip ${stateClass}">${svgIcon(kind)}<span>${esc(label)}</span></span>`;
+  }
+
+  function vehicleControlButton(entity, command, label, extra = "") {
+    if (!entity) return "";
+    return `<button class="vehicle-action ${extra}" data-action="entity" data-id="${esc(entity.entity_id)}" data-command="${esc(command)}" type="button">${esc(label)}</button>`;
+  }
+
+  function vehicleActionButton(entity, label, extra = "") {
+    if (!entity) return "";
+    if (entity.domain === "button") return vehicleControlButton(entity, "press", label, extra);
+    if (["scene", "script"].includes(entity.domain)) return vehicleControlButton(entity, "activate", label, extra);
+    return "";
+  }
+
+  function vehicleCardEntity(entity) {
+    const text = vehicleEntityText(entity);
+    if (/volvo|xc40|ex40/.test(text)) return true;
+    return ["battery", "bateria", "odometer", "odômetro", "odometro", "quilometragem", "door", "porta", "window", "vidro", "climat", "preheat", "warning", "alerta"].some((keyword) => text.includes(keyword));
   }
 
   function vehicleValue(entity) {
-    if (!entity) return "—";
-    if (entity.numeric_value !== null && entity.numeric_value !== undefined) {
-      return `${entity.numeric_value}${entityUnit(entity) ? ` ${entityUnit(entity)}` : ""}`;
-    }
-    return humanState(entity);
+    return vehicleNumericValue(entity);
   }
 
   function garageVehicleCard() {
-    const garageEntities = garageEntitiesForDisplay();
-    const all = [...garageEntities, ...allEntities().filter((entity) => !garageEntities.includes(entity))];
+    const all = allEntities();
     const hasVolvo = all.some((entity) => vehicleEntityText(entity).match(/volvo|xc40|ex40/));
-    const battery = firstVehicleEntity(all, ["nível de carga", "nivel de carga", "battery", "bateria", "state of charge", "soc"]);
-    const charging = firstVehicleEntity(all, ["estado do carregamento", "charging state", "carregando", "charge state"]);
-    const power = firstVehicleEntity(all, ["potência de carregamento", "potencia de carregamento", "charging power"]);
-    const connection = firstVehicleEntity(all, ["ligação ao carro", "ligacao ao carro", "car connection", "connection"]);
+    const battery = firstVehicleEntity(all, ["battery charge level", "nível de carga", "nivel de carga", "state of charge", "bateria", "battery", "soc"]);
+    const range = firstVehicleEntity(all, ["distance to empty battery", "electric range", "autonomia", "alcance", "range"]);
+    const odometer = firstVehicleEntity(all, ["odometer", "odômetro", "odometro", "quilometragem", "kilometragem"]);
+    const charging = firstVehicleEntity(all, ["charging status", "estado do carregamento", "charging state", "carregando", "charge state"]);
+    const connection = firstVehicleEntity(all, ["charging connection status", "charging connection", "ligação ao carro", "ligacao ao carro", "car connection", "connection"]);
+    const lock = all.find((entity) => entity.domain === "lock" && /volvo|xc40|ex40|carro|vehicle/.test(vehicleEntityText(entity))) || firstVehicleEntity(all, ["door lock", "fechadura", "lock", "tranca"]);
+    const doors = vehicleEntities(all, ["door", "porta", "tailgate", "porta-malas", "portamalas"]).filter((entity) => entity.domain === "binary_sensor");
+    const windows = vehicleEntities(all, ["window", "vidro", "janela"]).filter((entity) => entity.domain === "binary_sensor");
+    const warnings = vehicleEntities(all, ["warning", "warnings", "alerta", "problem", "problema"]).filter(vehicleActive);
+    const startClimate = firstVehicleEntity(all, ["start climatization", "iniciar climatização", "iniciar climatizacao", "start climate", "preheat"]);
+    const stopClimate = firstVehicleEntity(all, ["stop climatization", "parar climatização", "parar climatizacao", "stop climate"]);
     const vehicleName = hasVolvo
       ? (all.some((entity) => vehicleEntityText(entity).includes("ex40")) ? "Volvo EX40" : "Volvo XC40")
       : "Volvo XC40 / EX40";
@@ -924,17 +1020,31 @@
       ? Math.max(0, Math.min(100, Number(battery.numeric_value)))
       : null;
     const batteryLabel = batteryPercent === null ? vehicleValue(battery) : `${Math.round(batteryPercent)}%`;
+    const chargingLabel = vehicleChargingState(charging, "Não carregando");
+    const connectionLabel = vehicleConnectionState(connection, hasVolvo ? "Conectado" : "Aguardando veículo");
+    const openDoors = doors.filter((entity) => vehicleClosed(entity) === false);
+    const openWindows = windows.filter((entity) => vehicleClosed(entity) === false);
+    const doorsLabel = doors.length ? (openDoors.length ? `${openDoors.length} aberta${openDoors.length === 1 ? "" : "s"}` : "Fechadas") : "Sem leitura";
+    const windowsLabel = windows.length ? (openWindows.length ? `${openWindows.length} aberta${openWindows.length === 1 ? "" : "s"}` : "Fechados") : "Sem leitura";
+    const alertLabel = warnings.length ? `${warnings.length} alerta${warnings.length === 1 ? "" : "s"}` : "Sem alertas";
+    const hasOpen = openDoors.length > 0 || openWindows.length > 0;
+    const hasProblem = warnings.length > 0;
+    const lockLabel = vehicleState(lock, "Sem leitura");
+    const lockClass = String(lock?.state || "").toLowerCase() === "unlocked" ? "is-warning" : "is-ok";
     return `
-      <article class="vehicle-card">
-        <div class="vehicle-card-art"><div class="vehicle-glow"></div><div class="vehicle-car-icon">${svgIcon("car")}</div><span>GARAGEM</span></div>
+      <article class="vehicle-card ${hasVolvo ? "is-linked" : "is-placeholder"}">
+        <div class="vehicle-card-art"><div class="vehicle-art-top"><span>VOLVO</span><span class="vehicle-connection ${connection ? "is-online" : ""}">${esc(connectionLabel)}</span></div><div class="vehicle-glow"></div><div class="vehicle-car-icon">${svgIcon("car")}</div><div class="vehicle-art-caption"><strong>${esc(vehicleName)}</strong><small>GARAGEM</small></div></div>
         <div class="vehicle-card-body">
-          <div class="vehicle-card-title"><div><div class="eyebrow">CARRO ELÉTRICO</div><h3>${esc(vehicleName)}</h3><p>${hasVolvo ? "Dados espelhados do Home Assistant" : "Pronto para receber a entidade do veículo"}</p></div><span class="vehicle-battery-badge">${esc(batteryLabel)}</span></div>
+          <div class="vehicle-card-title"><div><div class="eyebrow">CARRO ELÉTRICO</div><h3>${esc(vehicleName)}</h3><p>${hasVolvo ? "Dados espelhados do Home Assistant" : "Pronto para receber a entidade do veículo"}</p></div><span class="vehicle-status-pill ${vehicleActive(charging) ? "is-charging" : ""}">${esc(chargingLabel)}</span></div>
+          <div class="vehicle-battery-row"><span>Bateria</span><strong>${esc(batteryLabel)}</strong><small>${esc(vehicleValue(range))}</small></div>
           <div class="vehicle-battery-track"><span style="width:${batteryPercent === null ? 0 : batteryPercent}%"></span></div>
           <div class="vehicle-stats">
-            <div><span>Carregamento</span><strong>${esc(vehicleValue(charging))}</strong></div>
-            <div><span>Potência</span><strong>${esc(vehicleValue(power))}</strong></div>
-            <div><span>Ligação</span><strong>${esc(vehicleValue(connection))}</strong></div>
+            <div><span>Odômetro</span><strong>${esc(vehicleValue(odometer))}</strong></div>
+            <div><span>Carregamento</span><strong>${esc(chargingLabel)}</strong></div>
+            <div><span>Ligação</span><strong>${esc(connectionLabel)}</strong></div>
           </div>
+          <div class="vehicle-status-row">${vehicleStatusChip("lock", lockLabel, lockClass)}${vehicleStatusChip("car", `Portas ${doorsLabel}`, hasOpen ? "is-warning" : "is-ok")}${vehicleStatusChip("sensor", `Vidros ${windowsLabel}`, openWindows.length ? "is-warning" : "is-ok")}${vehicleStatusChip("button", alertLabel, hasProblem ? "is-danger" : "is-ok")}</div>
+          <div class="vehicle-actions">${vehicleActionButton(startClimate, "Climatizar", "is-primary")}${vehicleActionButton(stopClimate, "Parar clima")}${lock?.domain === "lock" ? vehicleControlButton(lock, "lock", "Trancar") : ""}${lock?.domain === "lock" ? vehicleControlButton(lock, "unlock", "Destrancar", "is-secondary") : ""}</div>
         </div>
       </article>
     `;
@@ -944,7 +1054,7 @@
     $("#page-title").textContent = "Garagem";
     $("#page-subtitle").textContent = "Carregamento, carro e acesso próximos deste ambiente.";
     $("#garage-vehicle").innerHTML = garageVehicleCard();
-    const entities = garageEntitiesForDisplay();
+    const entities = garageEntitiesForDisplay().filter((entity) => !vehicleCardEntity(entity));
     $("#garage-grid").innerHTML = entities.length
       ? entities.map(entityCard).join("")
       : `<div class="empty-state"><div><strong>Garagem ainda sem entidades mapeadas</strong><span>Nomeie a área ou entidade como garagem, carro, wallbox ou carregador no Home Assistant para ela aparecer aqui.</span></div></div>`;

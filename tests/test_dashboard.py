@@ -82,8 +82,12 @@ def test_safe_attributes_do_not_forward_unknown_data():
 def test_energy_and_garage_classification_uses_names():
     solar = {"entity_id": "sensor.pv_power", "name": "PV", "attributes": {"device_class": "power"}}
     charger = {"entity_id": "sensor.wallbox_power", "name": "Wallbox", "area_name": "Garagem"}
+    odometer = {"entity_id": "sensor.volvo_xc40_odometer", "name": "Odometer"}
+    door = {"entity_id": "binary_sensor.volvo_xc40_front_door", "name": "Front door"}
     assert classify_energy(solar) == "generation"
     assert is_garage_related(charger)
+    assert is_garage_related(odometer)
+    assert is_garage_related(door)
 
 
 def test_dashboard_groups_areas_and_exposes_only_safe_attributes():

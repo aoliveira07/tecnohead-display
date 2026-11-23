@@ -904,24 +904,50 @@ body { background: #20252b; }
 .config-move-buttons button:active { color: var(--orange-bright); background: rgba(255, 138, 34, 0.17); }
 .config-empty { padding: 8px 2px; color: var(--quiet); font-size: 10px; }
 .config-footer { align-items: center; justify-content: space-between; padding-bottom: 26px; }
-.vehicle-card { display: grid; grid-template-columns: minmax(150px, 0.68fr) minmax(0, 1.32fr); min-height: 190px; margin-bottom: 14px; overflow: hidden; border: 1px solid rgba(255, 255, 255, 0.14); border-radius: 19px; background: #2c353d; box-shadow: 0 9px 24px rgba(0, 0, 0, 0.16); }
-.vehicle-card-art { position: relative; display: flex; min-height: 190px; flex-direction: column; align-items: center; justify-content: center; overflow: hidden; color: rgba(255, 255, 255, 0.68); background: linear-gradient(150deg, #334652, #17252d); }
-.vehicle-card-art > span { position: absolute; bottom: 12px; color: var(--blue); font-size: 9px; font-weight: 800; letter-spacing: 0.18em; }
-.vehicle-glow { position: absolute; right: -20%; bottom: -34%; width: 160px; height: 150px; border-radius: 50%; opacity: 0.46; background: #4f9fbc; filter: blur(30px); }
-.vehicle-car-icon { position: relative; z-index: 1; display: grid; width: 100px; height: 100px; place-items: center; border: 1px solid rgba(169, 209, 235, 0.22); border-radius: 50%; color: #cce4ee; background: rgba(169, 209, 235, 0.10); }
-.vehicle-car-icon .icon-svg { width: 62px; height: 62px; stroke-width: 1.15; }
-.vehicle-card-body { min-width: 0; padding: 20px; }
+.vehicle-card { display: grid; grid-template-columns: minmax(184px, 0.64fr) minmax(0, 1.36fr); min-height: 224px; margin-bottom: 14px; overflow: hidden; border: 1px solid rgba(255, 255, 255, 0.14); border-radius: 19px; background: linear-gradient(120deg, #29353d, #323c43 58%, #2a343b); box-shadow: 0 9px 24px rgba(0, 0, 0, 0.16); }
+.vehicle-card.is-linked { border-color: rgba(139, 203, 229, 0.3); }
+.vehicle-card.is-placeholder { opacity: 0.86; }
+.vehicle-card-art { position: relative; display: flex; min-height: 224px; flex-direction: column; align-items: stretch; justify-content: space-between; padding: 14px 16px 15px; overflow: hidden; color: rgba(255, 255, 255, 0.68); background: linear-gradient(150deg, #344a56, #17252d 78%); }
+.vehicle-card-art::after { position: absolute; inset: 0; content: ""; opacity: 0.45; background: linear-gradient(145deg, transparent 18%, rgba(255, 255, 255, 0.04) 19% 20%, transparent 21% 100%); }
+.vehicle-art-top, .vehicle-art-caption { position: relative; z-index: 2; display: flex; align-items: center; }
+.vehicle-art-top { justify-content: space-between; gap: 8px; color: rgba(225, 242, 248, 0.72); font-size: 9px; font-weight: 800; letter-spacing: 0.16em; }
+.vehicle-connection { max-width: 110px; overflow: hidden; color: rgba(255, 255, 255, 0.55); font-size: 9px; font-weight: 650; letter-spacing: 0; text-overflow: ellipsis; white-space: nowrap; }
+.vehicle-connection::before { display: inline-block; width: 6px; height: 6px; margin-right: 5px; border-radius: 50%; content: ""; background: #a5b5ba; }
+.vehicle-connection.is-online::before { background: #8bd5af; box-shadow: 0 0 0 3px rgba(139, 213, 175, 0.13); }
+.vehicle-glow { position: absolute; right: -20%; bottom: -34%; width: 190px; height: 155px; border-radius: 50%; opacity: 0.48; background: #4f9fbc; filter: blur(30px); }
+.vehicle-car-icon { position: relative; z-index: 1; display: grid; width: 126px; height: 84px; margin: auto; place-items: center; border: 1px solid rgba(169, 209, 235, 0.22); border-radius: 28px; color: #cce4ee; background: linear-gradient(145deg, rgba(169, 209, 235, 0.16), rgba(169, 209, 235, 0.04)); box-shadow: 0 18px 35px rgba(10, 21, 27, 0.22); }
+.vehicle-car-icon .icon-svg { width: 94px; height: 62px; stroke-width: 1.15; }
+.vehicle-art-caption { justify-content: space-between; gap: 8px; color: #fff; }
+.vehicle-art-caption strong, .vehicle-art-caption small { display: block; }
+.vehicle-art-caption strong { font-size: 14px; letter-spacing: -0.03em; }
+.vehicle-art-caption small { margin-top: 3px; color: rgba(255, 255, 255, 0.55); font-size: 8px; letter-spacing: 0.15em; }
+.vehicle-card-body { min-width: 0; padding: 17px 19px 16px; }
 .vehicle-card-title { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
-.vehicle-card-title h3 { margin-top: 5px; font-size: 23px; letter-spacing: -0.05em; }
+.vehicle-card-title h3 { margin-top: 4px; font-size: 21px; letter-spacing: -0.05em; }
 .vehicle-card-title p { margin-top: 4px; color: var(--muted); font-size: 10px; }
-.vehicle-battery-badge { flex: 0 0 auto; padding: 7px 9px; border: 1px solid rgba(169, 209, 235, 0.22); border-radius: 10px; color: var(--blue); font-size: 13px; font-weight: 750; background: rgba(169, 209, 235, 0.08); }
-.vehicle-battery-track { height: 8px; margin-top: 23px; overflow: hidden; border-radius: 99px; background: rgba(255, 255, 255, 0.12); }
+.vehicle-status-pill { flex: 0 0 auto; max-width: 145px; padding: 6px 9px; overflow: hidden; border: 1px solid rgba(255, 255, 255, 0.14); border-radius: 999px; color: var(--muted); font-size: 9px; font-weight: 700; text-overflow: ellipsis; white-space: nowrap; background: rgba(255, 255, 255, 0.06); }
+.vehicle-status-pill.is-charging { border-color: rgba(255, 173, 84, 0.44); color: var(--orange-bright); background: rgba(255, 138, 34, 0.13); }
+.vehicle-battery-row { display: grid; grid-template-columns: auto auto minmax(0, 1fr); align-items: baseline; gap: 9px; margin-top: 17px; }
+.vehicle-battery-row span { color: var(--muted); font-size: 10px; }
+.vehicle-battery-row strong { color: var(--blue); font-size: 18px; letter-spacing: -0.04em; }
+.vehicle-battery-row small { overflow: hidden; color: var(--quiet); font-size: 10px; text-align: right; text-overflow: ellipsis; white-space: nowrap; }
+.vehicle-battery-track { height: 7px; margin-top: 7px; overflow: hidden; border-radius: 99px; background: rgba(255, 255, 255, 0.12); }
 .vehicle-battery-track span { display: block; height: 100%; min-width: 3px; border-radius: inherit; background: linear-gradient(90deg, #83c8e3, #d5eff4); }
-.vehicle-stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin-top: 22px; }
-.vehicle-stats div { min-width: 0; }
+.vehicle-stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 9px; margin-top: 15px; }
+.vehicle-stats div { min-width: 0; padding: 8px 9px; border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 10px; background: rgba(255, 255, 255, 0.045); }
 .vehicle-stats span, .vehicle-stats strong { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.vehicle-stats span { color: var(--quiet); font-size: 9px; }
-.vehicle-stats strong { margin-top: 5px; color: var(--ink); font-size: 11px; }
+.vehicle-stats span { color: var(--quiet); font-size: 8px; }
+.vehicle-stats strong { margin-top: 4px; color: var(--ink); font-size: 10px; }
+.vehicle-status-row { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+.vehicle-status-chip { display: inline-flex; min-height: 26px; align-items: center; gap: 5px; padding: 0 7px; border: 1px solid rgba(139, 213, 175, 0.19); border-radius: 999px; color: #b7dfc7; font-size: 8px; font-weight: 650; background: rgba(139, 213, 175, 0.08); }
+.vehicle-status-chip .icon-svg { width: 13px; height: 13px; stroke-width: 1.5; }
+.vehicle-status-chip.is-warning { border-color: rgba(255, 173, 84, 0.3); color: var(--orange-bright); background: rgba(255, 138, 34, 0.11); }
+.vehicle-status-chip.is-danger { border-color: rgba(255, 134, 126, 0.3); color: #ffb7ae; background: rgba(181, 67, 62, 0.12); }
+.vehicle-actions { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 11px; }
+.vehicle-action { min-height: 30px; padding: 0 10px; border: 1px solid rgba(255, 255, 255, 0.13); border-radius: 9px; cursor: pointer; color: var(--ink); font-size: 9px; background: rgba(255, 255, 255, 0.07); }
+.vehicle-action:hover { background: rgba(255, 255, 255, 0.13); }
+.vehicle-action.is-primary { border-color: rgba(255, 173, 84, 0.48); color: #2b1b0f; background: linear-gradient(135deg, #ffd39b, #ff8a22); }
+.vehicle-action.is-secondary { color: var(--blue); }
 
 @media (max-width: 1080px) {
   .config-rooms { grid-template-columns: 1fr; }

@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.6.8
+
+- adiciona card compacto da Volvo na Garagem, com bateria, autonomia, odômetro, carregamento e conexão;
+- mostra o estado de portas, vidros, fechadura e alertas quando o Home Assistant disponibilizar essas entidades;
+- expõe ações de climatização e tranca/destranca somente quando houver entidades de comando compatíveis.
+
 ## 0.6.7
 
 - inclui Pillow no pacote do add-on para que a normalização de fotos funcione na imagem publicada;
