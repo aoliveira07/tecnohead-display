@@ -7,6 +7,7 @@
     catalog: null,
     view: "all",
     areaId: null,
+    solutionKey: null,
     configDirty: false,
     loading: false,
     timer: null,
@@ -32,6 +33,7 @@
     climate: "climate",
     sensor: "sensor",
     binary_sensor: "sensor",
+    camera: "camera",
     media_player: "media",
     scene: "scene",
     script: "script",
@@ -49,6 +51,7 @@
     sensor: '<circle cx="12" cy="12" r="3"/><path d="M5.6 5.6a9 9 0 0 0 0 12.8M18.4 5.6a9 9 0 0 1 0 12.8"/>',
     media: '<path d="M8 5v14l11-7L8 5Z"/><path d="M4 5v14"/>',
     tv: '<rect x="3" y="5" width="18" height="12" rx="1.5"/><path d="M8 21h8M12 17v4"/>',
+    camera: '<path d="M4 8.5h4l1.5-2h5l1.5 2h4v10H4z"/><circle cx="12" cy="13.5" r="3.2"/>',
     car: '<path d="m5 16 1.5-5h11L19 16M4 16h16v4H4zM7 20v1M17 20v1M7.5 15h.1M16.4 15h.1"/>',
     energy: '<path d="m13 2-8 12h6l-1 8 8-12h-6l1-8Z"/>',
     outdoor: '<path d="M12 21V9M12 11 7 6M12 14l5-5M8 21h8M5 8c1.4-2.2 3.5-3.2 6-3M19 8c-1.4-2.2-3.5-3.2-6-3"/>',
@@ -72,6 +75,7 @@
     "cover",
     "lock",
     "button",
+    "camera",
     "media_player",
     "climate",
     "vacuum",
@@ -127,6 +131,7 @@
     if (text.includes("pia")) return svgIcon("sink");
     if (text.includes("coifa") || text.includes("hood")) return svgIcon("hood");
     if (text.includes("tv") || text.includes("televis")) return svgIcon("tv");
+    if (domain === "camera" || text.includes("câmera") || text.includes("camera")) return svgIcon("camera");
     if (text.includes("charger") || text.includes("carga") || text.includes("carreg") || text.includes("volvo")) return svgIcon("car");
     if (text.includes("portão") || text.includes("portao") || text.includes("gate")) return svgIcon("cover");
     if (custom.includes("lightbulb") || domain === "light") return svgIcon("light");
@@ -349,6 +354,21 @@
     });
   }
 
+  function renderSolutionNav() {
+    const icons = { lighting: "light", climate: "climate", covers: "cover", locks: "lock", cameras: "camera", energy: "energy" };
+    document.querySelectorAll("[data-solution], [data-view='cameras'], .solution-list [data-view='energy']").forEach((button) => {
+      const key = button.dataset.solution || (button.dataset.view === "cameras" ? "cameras" : button.dataset.view === "energy" ? "energy" : "");
+      const icon = button.querySelector(".rail-icon");
+      if (icon && icons[key]) icon.innerHTML = svgIcon(icons[key]);
+      const active = button.dataset.view === "cameras"
+        ? state.view === "cameras"
+        : button.dataset.view === "energy"
+          ? state.view === "energy"
+        : state.view === "solution" && button.dataset.solution === state.solutionKey;
+      button.classList.toggle("is-active", active);
+    });
+  }
+
   function levelPercent(entity) {
     const attributes = entityAttributes(entity);
     let value = null;
@@ -445,6 +465,7 @@
   function entitySection(entity) {
     if (["light", "switch", "fan", "input_boolean"].includes(entity?.domain)) return "lighting";
     if (entity?.domain === "media_player") return "media";
+    if (entity?.domain === "camera") return "cameras";
     return "other";
   }
 
@@ -705,6 +726,7 @@
     const groups = homeRoomGroups().filter((group) => group.key !== "garagem");
     const actions = [
       { view: "all", icon: svgIcon("kitchen"), label: "Casa" },
+      { view: "cameras", icon: svgIcon("camera"), label: "Câmeras" },
       ...scenes.map((scene) => ({ scene: scene.entity_id, icon: svgIcon("scene"), label: scene.name })),
       ...groups.map((group) => ({ view: "area", areaId: group.areaId, icon: group.icon, label: group.label })),
       { view: "garage", icon: svgIcon("garage"), label: "Garagem" },
@@ -835,6 +857,151 @@
     return readOnlyCard(entity);
   }
 
+  function solutionEntities(key) {
+    const entities = roomEntities(allEntities());
+    const filters = {
+      lighting: new Set(["light", "switch", "fan", "input_boolean"]),
+      climate: new Set(["climate"]),
+      covers: new Set(["cover"]),
+      locks: new Set(["lock"]),
+    };
+    const domains = filters[key] || new Set();
+    return entities.filter((entity) => domains.has(entity.domain));
+  }
+
+  function temperatureText(value, fallback = "—") {
+    const number = Number(value);
+    if (!Number.isFinite(number)) return fallback;
+    return `${number.toLocaleString("pt-BR", { maximumFractionDigits: 1 })}°`;
+  }
+
+  function climateModeLabel(mode) {
+    const labels = {
+      off: "Desativado",
+      cool: "Resfriar",
+      heat: "Aquecer",
+      auto: "Automático",
+      dry: "Desumidificar",
+      fan_only: "Ventilar",
+      heat_cool: "Automático",
+    };
+    return labels[String(mode || "").toLowerCase()] || mode || "Sem leitura";
+  }
+
+  function climateShowcase(entities) {
+    if (!entities.length) {
+      return `<section class="apple-showcase"><div class="showcase-heading"><span class="showcase-heading-icon">${svgIcon("climate")}</span><span>Clima</span></div><div class="solution-empty">Nenhum equipamento de clima encontrado.</div></section>`;
+    }
+    const entity = entities[0];
+    const attributes = entityAttributes(entity);
+    const current = attributes.current_temperature ?? attributes.temperature;
+    const target = attributes.target_temperature ?? attributes.temperature;
+    const numericTarget = Number(target);
+    const level = Number.isFinite(numericTarget) ? Math.max(0, Math.min(100, ((numericTarget - 16) / 16) * 100)) : 0;
+    const modes = Array.isArray(attributes.hvac_modes) ? attributes.hvac_modes.slice(0, 4) : [];
+    return `
+      <section class="apple-showcase climate-showcase">
+        <div class="showcase-heading"><span class="showcase-heading-icon">${svgIcon("climate")}</span><span>Clima</span></div>
+        <div class="solution-card-name">${esc(friendlyEntityName(entity))}</div>
+        <div class="solution-card-subtitle">Atual: ${esc(temperatureText(current, "Sem leitura"))}</div>
+        <div class="climate-dial" style="--dial-level:${level}%">
+          <div class="climate-dial-copy"><small>${esc(climateModeLabel(attributes.hvac_mode || entity.state))}</small><strong>${esc(temperatureText(target, temperatureText(current, "—")))}</strong><span>alvo</span></div>
+        </div>
+        <div class="climate-controls">
+          <button class="small-action" data-action="entity" data-id="${esc(entity.entity_id)}" data-command="set_temperature" data-value="${Number.isFinite(numericTarget) ? Math.max(16, numericTarget - 1) : 22}" type="button">−</button>
+          <span>${esc(temperatureText(target, "—"))}</span>
+          <button class="small-action" data-action="entity" data-id="${esc(entity.entity_id)}" data-command="set_temperature" data-value="${Number.isFinite(numericTarget) ? Math.min(32, numericTarget + 1) : 24}" type="button">+</button>
+        </div>
+        ${modes.length ? `<div class="climate-modes">${modes.map((mode) => `<button class="mode-chip ${String(attributes.hvac_mode) === String(mode) ? "is-selected" : ""}" data-action="entity" data-id="${esc(entity.entity_id)}" data-command="set_hvac_mode" data-value="${esc(mode)}" type="button">${esc(climateModeLabel(mode))}</button>`).join("")}</div>` : ""}
+      </section>
+    `;
+  }
+
+  function coverPercent(entity) {
+    const value = levelPercent(entity);
+    if (value !== null) return value;
+    if (String(entity?.state).toLowerCase() === "open") return 100;
+    if (String(entity?.state).toLowerCase() === "closed") return 0;
+    return null;
+  }
+
+  function coverShowcase(entities) {
+    if (!entities.length) {
+      return `<section class="apple-showcase"><div class="showcase-heading"><span class="showcase-heading-icon">${svgIcon("cover")}</span><span>Persianas</span></div><div class="solution-empty">Nenhuma persiana encontrada.</div></section>`;
+    }
+    return `
+      <section class="apple-showcase cover-showcase">
+        <div class="showcase-heading"><span class="showcase-heading-icon">${svgIcon("cover")}</span><span>Persianas</span></div>
+        <div class="cover-showcase-list">${entities.slice(0, 2).map((entity) => {
+          const percent = coverPercent(entity);
+          const safePercent = percent === null ? 0 : percent;
+          return `<article class="cover-solution-row"><div class="cover-solution-copy"><strong>${esc(friendlyEntityName(entity))}</strong><span>${percent === null ? esc(humanState(entity)) : `${percent}% aberta`}</span><div class="cover-actions"><button class="small-action" data-action="entity" data-id="${esc(entity.entity_id)}" data-command="open" type="button">Abrir</button><button class="small-action" data-action="entity" data-id="${esc(entity.entity_id)}" data-command="close" type="button">Fechar</button></div></div><div class="cover-position" aria-label="${safePercent}% aberta"><div class="cover-position-fill" style="height:${safePercent}%"></div><span>${svgIcon("cover")}</span></div></article>`;
+        }).join("")}</div>
+      </section>
+    `;
+  }
+
+  function lockShowcase(entities) {
+    if (!entities.length) {
+      return `<section class="apple-showcase"><div class="showcase-heading"><span class="showcase-heading-icon">${svgIcon("lock")}</span><span>Travas</span></div><div class="solution-empty">Nenhuma trava encontrada.</div></section>`;
+    }
+    return `
+      <section class="apple-showcase lock-showcase">
+        <div class="showcase-heading"><span class="showcase-heading-icon">${svgIcon("lock")}</span><span>Travas</span></div>
+        ${entities.slice(0, 3).map((entity) => {
+          const unlocked = String(entity.state).toLowerCase() === "unlocked";
+          return `<article class="lock-solution-row"><div class="lock-solution-icon ${unlocked ? "is-warning" : ""}">${svgIcon("lock")}</div><div class="lock-solution-copy"><strong>${esc(friendlyEntityName(entity))}</strong><span>${esc(humanState(entity))}</span></div><button class="small-action" data-action="entity" data-id="${esc(entity.entity_id)}" data-command="${unlocked ? "lock" : "unlock"}" type="button">${unlocked ? "Trancar" : "Abrir"}</button></article>`;
+        }).join("")}
+      </section>
+    `;
+  }
+
+  function cameraCard(entity) {
+    const source = `api/camera/${encodeURIComponent(entity.entity_id)}?v=${encodeURIComponent(state.payload?.updated_at || Date.now())}`;
+    const status = ["recording", "streaming", "on"].includes(String(entity.state).toLowerCase()) ? "Ao vivo" : "Disponível";
+    return `
+      <article class="camera-card" data-camera-card>
+        <div class="camera-preview"><img class="camera-preview-image" data-camera-image src="${source}" alt="${esc(friendlyEntityName(entity))}" loading="lazy"><div class="camera-preview-fallback">${svgIcon("camera")}<span>Imagem indisponível</span></div><span class="camera-live"><i></i>${status}</span><button class="camera-expand" type="button" title="Abrir câmera" aria-label="Abrir câmera">⛶</button></div>
+        <div class="camera-card-footer"><div><strong>${esc(friendlyEntityName(entity))}</strong><span>${esc(entity.area_name || "Sem cômodo")}</span></div><span class="camera-card-dot"></span></div>
+      </article>
+    `;
+  }
+
+  function renderSolution() {
+    const labels = { lighting: "Luzes", climate: "Clima", covers: "Persianas", locks: "Travas" };
+    const entities = solutionEntities(state.solutionKey);
+    const title = labels[state.solutionKey] || "Soluções";
+    $("#page-title").textContent = title;
+    $("#page-subtitle").textContent = "Controles organizados por tipo de solução.";
+    $("#home-dashboard").classList.add("is-hidden");
+    $("#overview-strip").classList.add("is-hidden");
+    $("#scene-panel").classList.add("is-hidden");
+    $("#room-grid").classList.remove("is-hidden");
+    const content = state.solutionKey === "climate"
+      ? climateShowcase(entities)
+      : state.solutionKey === "covers"
+        ? coverShowcase(entities)
+        : state.solutionKey === "locks"
+          ? lockShowcase(entities)
+          : entities.map(entityCard).join("");
+    $("#room-grid").innerHTML = content || `<div class="empty-state"><div><strong>Nada para mostrar aqui</strong><span>O Home Assistant ainda não encontrou equipamentos nesta solução.</span></div></div>`;
+  }
+
+  function renderCameras() {
+    $("#page-title").textContent = "Câmeras";
+    $("#page-subtitle").textContent = "Veja os ambientes principais sem sair do painel.";
+    const cameras = allEntities().filter((entity) => entity.domain === "camera" && entityAttributes(entity).entity_category !== "diagnostic");
+    const climates = solutionEntities("climate");
+    const covers = solutionEntities("covers");
+    const locks = solutionEntities("locks");
+    $("#camera-grid").innerHTML = cameras.length
+      ? cameras.map(cameraCard).join("")
+      : `<div class="empty-state"><div><strong>Nenhuma câmera encontrada</strong><span>Adicione câmeras ao Home Assistant para vê-las nesta tela.</span></div></div>`;
+    $("#climate-showcase").innerHTML = climateShowcase(climates);
+    $("#cover-showcase").innerHTML = coverShowcase(covers);
+    $("#lock-showcase").innerHTML = lockShowcase(locks);
+  }
+
   function renderRoom() {
     if (state.view === "all") {
       $("#page-title").textContent = state.payload?.home?.name || "Casa";
@@ -844,6 +1011,10 @@
       $("#scene-panel").classList.add("is-hidden");
       $("#room-grid").classList.add("is-hidden");
       renderHomeDashboard();
+      return;
+    }
+    if (state.view === "solution") {
+      renderSolution();
       return;
     }
     $("#home-dashboard").classList.add("is-hidden");
@@ -1136,7 +1307,7 @@
       <article class="config-room-card" data-config-group="${esc(group.key)}">
         <div class="config-room-heading"><div class="config-room-title"><span class="config-room-icon">${roomIcon(group.key)}</span><div><h3>${esc(group.label || group.key)}</h3><p>Selecione as áreas espelhadas e os equipamentos visíveis.</p></div></div><label class="config-toggle"><input type="checkbox" data-config-enabled ${group.enabled === false ? "" : "checked"}><span></span><b>Exibir</b></label></div>
         <div class="config-area-block"><div class="config-label">ÁREAS ESPELHADAS</div><div class="config-area-choices">${configAreas().map((area) => `<label class="config-area-choice"><input type="checkbox" data-config-area="${esc(area.id)}" ${areaIds.includes(area.id) ? "checked" : ""}><span>${areaIcon(area)}</span>${esc(area.name)}</label>`).join("") || `<span class="config-empty">Nenhuma área descoberta.</span>`}</div></div>
-        <div class="config-sections">${section("lighting", "Iluminação e acionamentos", "Luzes, interruptores, ventilação e persianas")}${section("media", "Áudio e vídeo", "TVs, caixas e players")}${section("other", "Outros dispositivos", "Sensores, portões, cenas e controles auxiliares")}</div>
+        <div class="config-sections">${section("lighting", "Iluminação e acionamentos", "Luzes, interruptores e ventilação")}${section("media", "Áudio e vídeo", "TVs, caixas e players")}${section("cameras", "Câmeras", "Pré-visualizações ao vivo por cômodo")}${section("other", "Outros dispositivos", "Sensores, portões, persianas, cenas e controles auxiliares")}</div>
       </article>
     `;
   }
@@ -1201,20 +1372,24 @@
   function render() {
     if (!state.payload) return;
     renderRoomList();
+    renderSolutionNav();
     renderSidebar();
     renderQuickActions();
     const room = $("#room-view");
     const energy = $("#energy-view");
     const garage = $("#garage-view");
+    const cameras = $("#cameras-view");
     const config = $("#config-view");
-    room.classList.toggle("is-hidden", state.view !== "all" && state.view !== "area");
+    room.classList.toggle("is-hidden", !["all", "area", "solution"].includes(state.view));
     energy.classList.toggle("is-hidden", state.view !== "energy");
     garage.classList.toggle("is-hidden", state.view !== "garage");
+    cameras.classList.toggle("is-hidden", state.view !== "cameras");
     config.classList.toggle("is-hidden", state.view !== "config");
     if (state.view === "config") {
       if (!state.configDirty) renderConfig();
     } else if (state.view === "energy") renderEnergy();
     else if (state.view === "garage") renderGarage();
+    else if (state.view === "cameras") renderCameras();
     else renderRoom();
     $("#last-update").textContent = formatUpdated(state.payload.updated_at);
   }
@@ -1222,6 +1397,7 @@
   function selectViewButton(viewButton) {
     state.view = viewButton.dataset.view;
     state.areaId = viewButton.dataset.areaId || null;
+    state.solutionKey = viewButton.dataset.solution || null;
     state.configDirty = false;
     render();
     if (state.view === "config") loadLayoutConfig();
@@ -1403,6 +1579,12 @@
     const entityButton = event.target.closest('[data-action="entity"]');
     if (entityButton) {
       sendAction(entityButton.dataset.id, entityButton.dataset.command, entityButton.dataset.value, entityButton);
+      return;
+    }
+    const cameraExpand = event.target.closest(".camera-expand");
+    if (cameraExpand) {
+      const image = cameraExpand.closest(".camera-preview")?.querySelector(".camera-preview-image");
+      if (image?.requestFullscreen) image.requestFullscreen().catch(() => {});
     }
   });
 
@@ -1438,7 +1620,14 @@
     if (source && source.value) sendAction(source.dataset.id, "source", source.value);
     const volume = event.target.closest('[data-action="volume"]');
     if (volume) sendAction(volume.dataset.id, "volume", Number(volume.value));
+    const position = event.target.closest('[data-action="position"]');
+    if (position) sendAction(position.dataset.id, "set_position", Number(position.value));
   });
+
+  document.addEventListener("error", (event) => {
+    if (!event.target?.matches?.("[data-camera-image]")) return;
+    event.target.closest("[data-camera-card]")?.classList.add("is-offline");
+  }, true);
 
   $("#refresh-button").addEventListener("click", () => load(true));
   load(false);

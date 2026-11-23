@@ -74,9 +74,18 @@ class FakeHomeAssistant:
 
 def test_safe_attributes_do_not_forward_unknown_data():
     result = safe_attributes(
-        {"friendly_name": "Cozinha", "unit_of_measurement": "W", "password": "hidden"}
+        {
+            "friendly_name": "Cozinha",
+            "unit_of_measurement": "W",
+            "hvac_modes": ["off", "cool", "heat"],
+            "password": "hidden",
+        }
     )
-    assert result == {"friendly_name": "Cozinha", "unit_of_measurement": "W"}
+    assert result == {
+        "friendly_name": "Cozinha",
+        "unit_of_measurement": "W",
+        "hvac_modes": ["off", "cool", "heat"],
+    }
 
 
 def test_energy_and_garage_classification_uses_names():
@@ -135,4 +144,17 @@ def test_actions_are_limited_to_known_home_assistant_services():
 
     with pytest.raises(ValueError):
         asyncio.run(execute_entity_action(client, "sensor.geracao_solar", "turn_off"))
+
+
+def test_climate_and_cover_touch_actions_use_home_assistant_services():
+    client = FakeHomeAssistant()
+    asyncio.run(execute_entity_action(client, "climate.sala", "set_hvac_mode", "cool"))
+    asyncio.run(execute_entity_action(client, "climate.sala", "set_temperature", 21.5))
+    asyncio.run(execute_entity_action(client, "cover.persiana", "set_position", 58))
+
+    assert client.calls == [
+        ("climate", "set_hvac_mode", {"entity_id": "climate.sala", "hvac_mode": "cool"}),
+        ("climate", "set_temperature", {"entity_id": "climate.sala", "temperature": 21.5}),
+        ("cover", "set_cover_position", {"entity_id": "cover.persiana", "position": 58}),
+    ]
 

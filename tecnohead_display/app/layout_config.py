@@ -17,6 +17,7 @@ GROUP_DEFAULTS = (
 SECTION_DEFAULTS = {
     "lighting": True,
     "media": True,
+    "cameras": True,
     "other": True,
 }
 

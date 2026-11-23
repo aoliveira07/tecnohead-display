@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.7.0
+
+- adiciona tela de Câmeras com pré-visualizações ao vivo via proxy autenticado do Home Assistant;
+- adiciona navegação lateral por solução para Luzes, Clima, Persianas, Travas, Câmeras e Energia;
+- aproxima clima, persianas e travas do visual Apple-like aprovado, com controles touch;
+- permite configurar câmeras por cômodo junto das demais categorias do layout;
+- adiciona ações de temperatura, modo HVAC e posição das persianas quando as entidades expõem esses comandos.
+
 ## 0.6.9
 
 - substitui a silhueta por uma imagem real do Volvo EX40 cinza, recortada da referência enviada;

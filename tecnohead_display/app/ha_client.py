@@ -5,6 +5,7 @@ from __future__ import annotations
 import asyncio
 import json
 import os
+import re
 from dataclasses import dataclass
 from urllib.parse import urlsplit, urlunsplit
 
@@ -78,6 +79,30 @@ class HomeAssistantClient:
             f"/api/services/{domain}/{service}",
             json=service_data,
         )
+
+    async def camera_image(self, entity_id: str) -> tuple[bytes, str]:
+        """Fetch one camera frame while keeping the HA token on the backend."""
+
+        if not re.fullmatch(r"camera\.[a-z0-9_]+", entity_id):
+            raise HomeAssistantError("Entidade de câmera inválida")
+        try:
+            async with httpx.AsyncClient(timeout=self.timeout) as http:
+                response = await http.get(
+                    self._url(f"/api/camera_proxy/{entity_id}"),
+                    headers={**self._headers(), "Accept": "image/*"},
+                )
+        except httpx.HTTPError as exc:
+            raise HomeAssistantError(f"Falha de rede ao acessar câmera: {exc}") from exc
+
+        if response.is_error:
+            detail = response.text[:240].replace("\n", " ")
+            raise HomeAssistantError(
+                f"Home Assistant respondeu HTTP {response.status_code}: {detail}"
+            )
+        content_type = response.headers.get("content-type", "image/jpeg").split(";", 1)[0]
+        if not content_type.startswith("image/"):
+            content_type = "image/jpeg"
+        return response.content, content_type
 
     def _websocket_url(self) -> str:
         parsed = urlsplit(self.base_url)

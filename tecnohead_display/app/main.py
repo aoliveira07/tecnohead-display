@@ -5,7 +5,7 @@ from __future__ import annotations
 from pathlib import Path
 
 from fastapi import FastAPI, HTTPException
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, Response
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
@@ -18,7 +18,7 @@ WEB_DIR = Path(__file__).resolve().parents[1] / "web"
 client = HomeAssistantClient.from_env()
 photo_frame = ImmichPhotoFrame.from_env()
 
-app = FastAPI(title="Tecnohead Display", version="0.6.9")
+app = FastAPI(title="Tecnohead Display", version="0.7.0")
 app.mount("/static", StaticFiles(directory=WEB_DIR / "static"), name="static")
 layout_store = DisplayLayoutStore()
 
@@ -95,6 +95,15 @@ async def scene_action(payload: SceneAction) -> dict[str, object]:
         return await execute_entity_action(client, payload.entity_id, "activate")
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except HomeAssistantError as exc:
+        raise HTTPException(status_code=502, detail=str(exc)) from exc
+
+
+@app.get("/api/camera/{entity_id}", include_in_schema=False)
+async def camera_image(entity_id: str) -> Response:
+    try:
+        image, media_type = await client.camera_image(entity_id)
+        return Response(content=image, media_type=media_type, headers={"Cache-Control": "no-store"})
     except HomeAssistantError as exc:
         raise HTTPException(status_code=502, detail=str(exc)) from exc
 

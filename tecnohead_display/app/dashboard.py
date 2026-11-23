@@ -11,6 +11,7 @@ from .layout_config import normalize_layout
 DISPLAY_DOMAINS = {
     "binary_sensor",
     "button",
+    "camera",
     "climate",
     "cover",
     "fan",
@@ -30,11 +31,13 @@ DISPLAY_DOMAINS = {
 SAFE_ATTRIBUTE_KEYS = {
     "brightness",
     "device_class",
+    "current_temperature",
     "entity_category",
     "fan_mode",
     "friendly_name",
     "hvac_action",
     "hvac_mode",
+    "hvac_modes",
     "icon",
     "is_volume_muted",
     "media_album_name",
@@ -43,6 +46,7 @@ SAFE_ATTRIBUTE_KEYS = {
     "media_position",
     "media_title",
     "percentage",
+    "current_position",
     "source",
     "source_list",
     "state_class",
@@ -138,7 +142,7 @@ def safe_attributes(attributes: object) -> dict[str, object]:
         value = attributes.get(key)
         if value is None:
             continue
-        if key == "source_list" and isinstance(value, list):
+        if key in {"source_list", "hvac_modes"} and isinstance(value, list):
             result[key] = [str(item) for item in value[:24]]
         elif isinstance(value, (str, int, float, bool)):
             result[key] = value
@@ -322,7 +326,7 @@ async def build_dashboard(
             garage.append(entity)
 
     return {
-        "app": {"name": "Tecnohead Display", "version": "0.6.9"},
+        "app": {"name": "Tecnohead Display", "version": "0.7.0"},
         "home": {"name": str(config.get("location_name") or "Casa")},
         "areas": areas,
         "scenes": scenes,
@@ -410,8 +414,25 @@ async def execute_entity_action(
             service_data["source"] = value.strip()
     elif domain == "cover" and action in {"open", "close", "stop"}:
         service = {"open": "open_cover", "close": "close_cover", "stop": "stop_cover"}[action]
+    elif domain == "cover" and action == "set_position":
+        numeric = _number(value)
+        if numeric is None:
+            raise ValueError("posição inválida")
+        service = "set_cover_position"
+        service_data["position"] = max(0, min(100, int(numeric)))
     elif domain == "lock" and action in {"lock", "unlock"}:
         service = f"{action}_lock"
+    elif domain == "climate" and action == "set_hvac_mode":
+        if not isinstance(value, str) or not value.strip():
+            raise ValueError("modo de clima inválido")
+        service = "set_hvac_mode"
+        service_data["hvac_mode"] = value.strip()
+    elif domain == "climate" and action == "set_temperature":
+        numeric = _number(value)
+        if numeric is None:
+            raise ValueError("temperatura inválida")
+        service = "set_temperature"
+        service_data["temperature"] = numeric
     elif domain == "button" and action == "press":
         service = "press"
     elif domain in {"scene", "script"} and action == "activate":

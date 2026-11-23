@@ -12,7 +12,9 @@ O porta-retrato usa as opções `immich_url`, `immich_api_key` e `immich_album_i
 
 ## Interface
 
-O layout foi pensado para uma tela touch horizontal próxima de 1366×768, com áreas descobertas automaticamente e três superfícies fixas: Garagem, Energia e Casa. O painel não inventa valores de energia: quando um sensor não existe ou está indisponível, mostra a ausência de leitura.
+O layout foi pensado para uma tela touch horizontal próxima de 1366×768, com áreas descobertas automaticamente e superfícies fixas para Casa, Câmeras, Garagem e Energia. A navegação lateral organiza as soluções em luzes, clima, persianas, travas, câmeras e energia. O painel não inventa valores de energia: quando um sensor não existe ou está indisponível, mostra a ausência de leitura.
+
+As imagens das entidades `camera.*` são obtidas pelo endpoint interno `/api/camera/<entity_id>`. O backend faz o proxy para `/api/camera_proxy` do Home Assistant usando o token do add-on; o token nunca chega ao navegador.
 
 ## Segurança operacional
 

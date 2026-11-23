@@ -11,6 +11,8 @@ Este projeto é separado do `tecnohead-multimidia`. Ele não importa código, n�
 - descoberta de áreas, dispositivos e entidades pelo Home Assistant;
 - cenas e scripts reais do Home Assistant como botões rápidos;
 - cartões para luzes, interruptores, ventiladores, persianas, travas, botões, clima, sensores e media players;
+- espaço de monitoramento com câmeras ao vivo e navegação lateral por solução (luzes, clima, persianas, travas, câmeras e energia);
+- cards Apple-like para clima, persianas e travas, com ações touch e proxy seguro de imagens das câmeras;
 - play/pause, stop, mudo, volume e fonte dos media players quando o Home Assistant expõe esses atributos;
 - fluxo de energia sem valores inventados: Geração → Casa → Rede, mais armazenamento;
 - garagem baseada na área e em nomes como garagem, carro, wallbox e carregador;
@@ -58,7 +60,7 @@ O primeiro corte é intencionalmente automático para permitir instalação imed
 
 ### Editor de layout
 
-Na engrenagem do painel, **Configurar painel** permite selecionar as áreas do Home Assistant que serão espelhadas em Cozinha, Externo e Garagem. Dentro de cada área, as entidades são separadas em iluminação/acionamentos, áudio e vídeo e outros dispositivos. A seleção, a ordem e as categorias ficam persistidas em `/data/display-layout.json` no add-on; o modo automático continua sendo o padrão até o primeiro salvamento.
+Na engrenagem do painel, **Configurar painel** permite selecionar as áreas do Home Assistant que serão espelhadas em Cozinha, Externo e Garagem. Dentro de cada área, as entidades são separadas em iluminação/acionamentos, áudio e vídeo, câmeras e outros dispositivos. A seleção, a ordem e as categorias ficam persistidas em `/data/display-layout.json` no add-on; o modo automático continua sendo o padrão até o primeiro salvamento.
 
 ## Qualidade
 
