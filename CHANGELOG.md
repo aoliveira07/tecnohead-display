@@ -1,10 +1,12 @@
 # Changelog
 
-## 0.9.0
+## 0.9.1
 
 - Mantém o watchdog do Supervisor no endpoint `/health` para reiniciar automaticamente o app se o processo cair.
 - Reestiliza o controle de clima para o modelo Apple/HomeKit, sem graus redundantes abaixo do dial.
 - Usa arco de 270 graus, bolinha de ajuste suave e seletor de modo em menu próprio.
+- Deixa o estado desligado mais discreto e identifica o equipamento com nome, entidade e área.
+- Troca o ícone de clima por um símbolo sutil de fluxo de ar.
 
 ## 0.7.0
 

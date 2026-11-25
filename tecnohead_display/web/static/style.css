@@ -1037,6 +1037,7 @@ body { background: #20252b; }
 .apple-showcase .showcase-heading-icon { width: 24px; height: 24px; color: var(--orange); }
 .apple-showcase .showcase-heading-icon .icon-svg { width: 22px; height: 22px; }
 .solution-card-name { margin-top: 5px; color: var(--ink); font-size: 14px; font-weight: 750; }
+.solution-card-entity { max-width: 100%; margin-top: 3px; overflow: hidden; color: var(--quiet); font-size: 8px; letter-spacing: 0.02em; text-overflow: ellipsis; white-space: nowrap; }
 .solution-card-subtitle { margin-top: 3px; color: var(--muted); font-size: 10px; }
 .climate-dial { position: relative; display: grid; width: min(214px, 88%); aspect-ratio: 1; margin: 16px auto 9px; place-items: center; border-radius: 50%; background: conic-gradient(from 225deg, var(--dial-accent) 0 var(--dial-sweep), rgba(255, 255, 255, 0.18) var(--dial-sweep) 270deg, transparent 270deg 360deg); cursor: grab; touch-action: none; user-select: none; }
 .climate-dial:active, .climate-dial.is-dragging { cursor: grabbing; }
@@ -1047,9 +1048,13 @@ body { background: #20252b; }
 .climate-dial.is-off .climate-dial-handle { border-width: 2px; background: #f5f8fa; }
 .climate-dial-copy { position: relative; z-index: 1; display: flex; align-items: center; flex-direction: column; text-align: center; }
 .climate-dial-copy small { color: var(--muted); font-size: 9px; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; }
-.climate-dial-copy strong { max-width: 90%; margin-top: 4px; color: var(--ink); font-size: 29px; letter-spacing: -0.06em; line-height: 1; }
+.climate-dial-copy strong { max-width: 76%; margin-top: 4px; color: var(--ink); font-size: 29px; letter-spacing: -0.06em; line-height: 1; }
 .climate-dial-reading { display: inline-flex; align-items: center; gap: 4px; margin-top: 10px; color: var(--quiet); font-size: 11px; }
 .climate-dial-reading .icon-svg { width: 13px; height: 13px; color: var(--muted); }
+.climate-showcase.is-off .climate-dial { width: min(194px, 82%); opacity: 0.78; }
+.climate-showcase.is-off .climate-dial-copy small { color: var(--quiet); }
+.climate-showcase.is-off .climate-dial-copy strong { color: rgba(239, 243, 246, 0.76); font-size: 22px; font-weight: 650; letter-spacing: -0.04em; }
+.climate-showcase.is-off .climate-dial-handle { top: -6px; left: calc(50% - 7px); width: 14px; height: 14px; opacity: 0.8; }
 .climate-mode-picker { position: relative; margin-top: 13px; }
 .climate-mode-button { display: flex; width: 100%; min-height: 38px; align-items: center; gap: 10px; padding: 0 12px; border: 1px solid rgba(255, 255, 255, 0.16); border-radius: 999px; color: var(--muted); cursor: pointer; font: inherit; font-size: 10px; text-align: left; background: rgba(255, 255, 255, 0.06); }
 .climate-mode-button strong { margin-left: auto; color: var(--ink); font-size: 11px; }

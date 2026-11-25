@@ -47,7 +47,7 @@
     hood: '<path d="M6 5h12v4H6zM4 9h16l1.5 8H2.5L4 9ZM8 20h8"/>',
     fan: '<circle cx="12" cy="12" r="2.2"/><path d="M12 9.5C9 4 14 2.7 15.5 5.4 16.7 7.6 14 10 12 9.5ZM14.5 12c5.5-3 6.8 2 4.1 3.5-2.2 1.2-4.6-1.5-4.1-3.5ZM12 14.5c3 5.5-2 6.8-3.5 4.1C7.3 16.4 10 13.9 12 14.5Z"/>',
     cover: '<path d="M4 4h16v16H4zM7 8h10M7 12h10M7 16h10"/>',
-    climate: '<path d="M8 4v16M5 7l3 3 3-3M5 17l3-3 3 3M16 4v16M13 7l3 3 3-3M13 17l3-3 3 3"/>',
+    climate: '<path d="M4 8h10a3 3 0 1 0-3-3M4 12h14a3 3 0 1 1-3 3M4 16h8a3 3 0 1 0-3 3"/>',
     thermometer: '<path d="M10 14.5V5a2 2 0 1 1 4 0v9.5a4 4 0 1 1-4 0Z"/><path d="M12 11v6"/>',
     sensor: '<circle cx="12" cy="12" r="3"/><path d="M5.6 5.6a9 9 0 0 0 0 12.8M18.4 5.6a9 9 0 0 1 0 12.8"/>',
     media: '<path d="M8 5v14l11-7L8 5Z"/><path d="M4 5v14"/>',
@@ -929,11 +929,12 @@
   function climateTile(entity) {
     const current = climateCurrent(entity);
     const mode = climateModeLabel(entityAttributes(entity).hvac_mode || entity.state);
+    const name = String(entity.device_name || friendlyEntityName(entity) || "Ar-condicionado").trim();
     return `
       <article class="display-tile climate-display-tile is-touchable" data-view="solution" data-solution="climate" role="button" tabindex="0" aria-label="Abrir controles de clima">
         <div class="tile-top"><div class="tile-icon">${svgIcon("climate")}</div><span class="climate-tile-status">${esc(mode)}</span></div>
         <div class="climate-tile-current">${esc(temperatureText(current, "—"))}</div>
-        <div class="tile-name">Ar</div>
+        <div class="tile-name" title="${esc(name)}">${esc(name)}</div>
         <div class="tile-state">${esc(mode)}</div>
       </article>
     `;
@@ -960,10 +961,13 @@
     const angle = off ? 90 : 225 + sweep;
     const modes = Array.isArray(attributes.hvac_modes) ? attributes.hvac_modes.slice(0, 4) : [];
     const modeOptions = modes.length ? modes : [attributes.hvac_mode || entity.state].filter(Boolean);
+    const deviceName = String(entity.device_name || friendlyEntityName(entity) || "Ar-condicionado").trim();
+    const entityLabel = `${entity.entity_id} · ${entity.area_name || "Sem cômodo"}`;
     return `
-      <section class="apple-showcase climate-showcase">
+      <section class="apple-showcase climate-showcase ${off ? "is-off" : "is-running"}">
         <div class="showcase-heading"><span class="showcase-heading-icon">${svgIcon("climate")}</span><span>Clima</span></div>
-        <div class="solution-card-name">${esc(friendlyEntityName(entity))}</div>
+        <div class="solution-card-name" title="${esc(deviceName)}">${esc(deviceName)}</div>
+        <div class="solution-card-entity" title="${esc(entityLabel)}">${esc(entityLabel)}</div>
         <div class="solution-card-subtitle">Ambiente: ${esc(temperatureText(current, "Sem leitura"))}</div>
         <div class="climate-dial climate-dial-interactive ${off ? "is-off" : ""}" data-climate-dial data-id="${esc(entity.entity_id)}" data-min="${minTemp}" data-max="${maxTemp}" data-value="${numericTarget}" data-mode="${esc(modeValue)}" style="--dial-sweep:${off ? 0 : sweep}deg;--dial-angle:${angle}deg;--dial-accent:${climateAccent(modeValue)}" aria-label="Ajustar temperatura alvo">
           <div class="climate-dial-orbit"><button class="climate-dial-handle" type="button" tabindex="-1" aria-label="Arraste para ajustar a temperatura"></button></div>
