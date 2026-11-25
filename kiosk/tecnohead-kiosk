@@ -20,7 +20,29 @@ is_ha_reachable() {
     curl -sS -o /dev/null --max-time 5 "$URL"
 }
 
+set_display_mode() {
+    if ! command -v xrandr >/dev/null 2>&1 || [ -z "${DISPLAY:-}" ]; then
+        return 0
+    fi
+
+    output=""
+    for _ in 1 2 3 4 5; do
+        output=$(xrandr --query 2>/dev/null | awk '$2 == "connected" {print $1; exit}')
+        if [ -n "$output" ]; then
+            if xrandr --output "$output" --mode 1920x1080 --rate 60 >/dev/null 2>&1; then
+                return 0
+            fi
+            if xrandr --output "$output" --auto >/dev/null 2>&1; then
+                return 0
+            fi
+        fi
+        sleep 2
+    done
+}
+
 while :; do
+    set_display_mode
+
     while ! is_ha_reachable; do
         sleep 5
     done
