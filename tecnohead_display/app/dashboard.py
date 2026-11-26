@@ -6,7 +6,7 @@ import re
 from datetime import UTC, datetime
 
 from .ha_client import HomeAssistantClient
-from .layout_config import normalize_layout
+from .layout_config import layout_schema, normalize_layout
 
 DISPLAY_DOMAINS = {
     "binary_sensor",
@@ -326,7 +326,7 @@ async def build_dashboard(
             garage.append(entity)
 
     return {
-        "app": {"name": "Tecnohead Display", "version": "0.9.1"},
+        "app": {"name": "Tecnohead Display", "version": "0.10.0"},
         "home": {"name": str(config.get("location_name") or "Casa")},
         "areas": areas,
         "scenes": scenes,
@@ -347,6 +347,7 @@ async def build_dashboard(
         "layout_config": {
             "layout": normalize_layout(layout),
             "catalog": layout_catalog(areas),
+            "schema": layout_schema(),
         },
     }
 

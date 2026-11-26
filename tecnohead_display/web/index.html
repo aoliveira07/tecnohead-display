@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <meta name="theme-color" content="#161b20">
     <title>Tecnohead Display</title>
-    <link rel="stylesheet" href="static/style.css?v=0.9.1">
+    <link rel="stylesheet" href="static/style.css?v=0.10.0">
   </head>
   <body>
     <div class="ambient ambient-one"></div>
@@ -34,23 +34,11 @@
         <div class="rail-scroll">
           <div class="rail-label">SOLUÇÕES</div>
           <nav class="solution-list" id="solution-list" aria-label="Soluções da casa">
-            <button class="rail-button" data-view="solution" data-solution="lighting" type="button"><span class="rail-icon">◉</span><span>Luzes</span></button>
-            <button class="rail-button" data-view="solution" data-solution="climate" type="button"><span class="rail-icon">♨</span><span>Clima</span></button>
-            <button class="rail-button" data-view="solution" data-solution="covers" type="button"><span class="rail-icon">▤</span><span>Persianas</span></button>
-            <button class="rail-button" data-view="solution" data-solution="locks" type="button"><span class="rail-icon">▣</span><span>Travas</span></button>
-            <button class="rail-button" data-view="cameras" type="button"><span class="rail-icon">▣</span><span>Câmeras</span></button>
-            <button class="rail-button" data-view="energy" type="button"><span class="rail-icon">ϟ</span><span>Energia</span></button>
           </nav>
           <div id="room-list" class="legacy-room-list" aria-hidden="true"></div>
         </div>
 
         <div class="rail-bottom">
-          <button class="rail-button" data-view="garage" type="button">
-            <span class="rail-icon">▱</span><span>Garagem</span>
-          </button>
-          <button class="rail-button" data-view="energy" type="button">
-            <span class="rail-icon">ϟ</span><span>Energia</span>
-          </button>
           <div class="connection-pill" id="connection-pill">
             <span class="connection-dot"></span><span id="connection-label">Conectando</span>
           </div>
@@ -128,14 +116,16 @@
             <div>
               <div class="eyebrow">PERSONALIZAR PAINEL</div>
               <h2>Montar a tela</h2>
-              <p>Escolha as áreas, os tipos de equipamento e a ordem que aparece na Casa.</p>
+              <p>Monte a experiência Apple Home e salve tudo no backend do Tecnohead Display.</p>
             </div>
             <div class="config-header-actions">
               <button class="config-action secondary" data-config-action="reload" type="button">Recarregar</button>
               <button class="config-action primary" data-config-action="save" type="button">Salvar layout</button>
             </div>
           </div>
-          <div class="config-note" id="config-note">O painel continua funcionando enquanto você edita. A ordem pode ser ajustada pelas setas ou arrastando cada item.</div>
+          <div class="config-note" id="config-note">Você pode escolher ícones, nomes, cômodos, categorias e ordem. O layout é validado e persistido no armazenamento do add-on.</div>
+          <div id="config-appearance"></div>
+          <div id="config-navigation"></div>
           <div class="config-rooms" id="config-rooms"></div>
           <div class="config-footer">
             <button class="config-action danger" data-config-action="reset" type="button">Restaurar seleção automática</button>
@@ -154,7 +144,7 @@
     </section>
 
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
-    <script src="static/dashboard.js?v=0.9.1" defer></script>
+    <script src="static/dashboard.js?v=0.10.0" defer></script>
   </body>
 </html>
 

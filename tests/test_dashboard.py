@@ -9,7 +9,7 @@ from tecnohead_display.app.dashboard import (
     is_garage_related,
     safe_attributes,
 )
-from tecnohead_display.app.layout_config import DisplayLayoutStore
+from tecnohead_display.app.layout_config import DisplayLayoutStore, layout_schema, normalize_layout
 
 
 class FakeHomeAssistant:
@@ -135,6 +135,36 @@ def test_layout_store_persists_only_known_layout_fields(tmp_path):
     assert loaded["groups"][0]["area_ids"] == ["cozinha"]
     assert loaded["groups"][0]["sections"]["media"] is False
     assert "unexpected" not in loaded
+
+
+def test_layout_normalizes_icons_navigation_and_entity_overrides():
+    layout = normalize_layout(
+        {
+            "appearance": {"theme": "invalid", "accent": "blue", "show_sidebar": False},
+            "navigation": [
+                {"key": "garage", "label": "Carro", "icon": "car", "enabled": False},
+                {"key": "unknown", "label": "Ignorado", "icon": "<svg>"},
+            ],
+            "entity_settings": {
+                "light.cozinha": {"label": "Luz principal", "icon": "light"},
+                "sensor.secret": {"label": "x", "icon": "<svg>"},
+            },
+            "groups": [{"key": "cozinha", "label": "Cozinha social", "icon": "tv"}],
+        }
+    )
+
+    assert layout["appearance"] == {"theme": "apple-dark", "accent": "blue", "show_sidebar": False}
+    assert layout["groups"][0]["icon"] == "tv"
+    assert layout["entity_settings"]["light.cozinha"] == {"label": "Luz principal", "icon": "light"}
+    assert layout["entity_settings"]["sensor.secret"] == {"label": "x"}
+    assert layout["navigation"][0]["key"] == "garage"
+    assert layout["navigation"][0]["enabled"] is False
+
+
+def test_layout_schema_exposes_safe_icon_catalog():
+    schema = layout_schema()
+    assert {item["key"] for item in schema["icons"]} >= {"home", "climate", "camera", "car"}
+    assert {item["key"] for item in schema["sections"]} >= {"climate", "covers", "locks"}
 
 
 def test_actions_are_limited_to_known_home_assistant_services():

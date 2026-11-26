@@ -12,13 +12,13 @@ from pydantic import BaseModel, Field
 from .dashboard import build_dashboard, execute_entity_action
 from .ha_client import HomeAssistantClient, HomeAssistantError
 from .immich import ImmichError, ImmichPhotoFrame
-from .layout_config import DisplayLayoutStore
+from .layout_config import DisplayLayoutStore, layout_schema
 
 WEB_DIR = Path(__file__).resolve().parents[1] / "web"
 client = HomeAssistantClient.from_env()
 photo_frame = ImmichPhotoFrame.from_env()
 
-app = FastAPI(title="Tecnohead Display", version="0.9.1")
+app = FastAPI(title="Tecnohead Display", version="0.10.0")
 app.mount("/static", StaticFiles(directory=WEB_DIR / "static"), name="static")
 layout_store = DisplayLayoutStore()
 
@@ -64,6 +64,7 @@ async def layout() -> dict[str, object]:
         return {
             "layout": payload["layout_config"]["layout"],
             "catalog": payload["layout_config"]["catalog"],
+            "schema": layout_schema(),
         }
     except HomeAssistantError as exc:
         raise HTTPException(status_code=502, detail=str(exc)) from exc

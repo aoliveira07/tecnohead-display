@@ -1105,3 +1105,88 @@ body { background: #20252b; }
   .solution-view-heading { align-items: flex-start; flex-direction: column; }
 }
 
+/* Backend-driven Apple Home configuration workspace. */
+body[data-theme="apple-dark"] {
+  --graphite: #161b20;
+  --glass: rgba(57, 64, 71, 0.78);
+  --glass-strong: rgba(40, 47, 54, 0.94);
+  --orange: #ff9f0a;
+  --orange-bright: #ffb340;
+  --orange-soft: rgba(255, 159, 10, 0.18);
+}
+
+body[data-theme="graphite-orange"] {
+  --glass: rgba(50, 56, 63, 0.72);
+  --glass-strong: rgba(42, 48, 55, 0.90);
+}
+
+body[data-accent="blue"] { --orange: #67bce9; --orange-bright: #a6d9f5; --orange-soft: rgba(103, 188, 233, 0.18); }
+body[data-accent="green"] { --orange: #72d39b; --orange-bright: #a9e6bd; --orange-soft: rgba(114, 211, 155, 0.18); }
+body.sidebar-hidden .room-rail { display: none; }
+body.sidebar-hidden .display-shell { gap: 0; }
+body[data-theme="apple-dark"] .room-rail { background: rgba(33, 36, 40, 0.93); }
+body[data-theme="apple-dark"] .main-panel { background: rgba(24, 27, 31, 0.88); }
+body[data-theme="apple-dark"] .overview-card,
+body[data-theme="apple-dark"] .scene-panel,
+body[data-theme="apple-dark"] .card,
+body[data-theme="apple-dark"] .energy-node,
+body[data-theme="apple-dark"] .metric-card { background: rgba(55, 60, 66, 0.82); }
+body[data-theme="apple-dark"] .display-tile { border-color: rgba(255, 255, 255, 0.12); background: rgba(61, 66, 72, 0.80); }
+body[data-theme="apple-dark"] .climate-display-tile { background: linear-gradient(145deg, #41474e, #30363c); }
+body[data-theme="apple-dark"] .feature-media,
+body[data-theme="apple-dark"] .energy-showcase,
+body[data-theme="apple-dark"] .apple-showcase { background: #30363c; }
+body[data-theme="apple-dark"] .sidebar-context { color: var(--muted); }
+
+#config-appearance, #config-navigation { margin-bottom: 14px; }
+.config-panel {
+  margin-bottom: 14px;
+  padding: 18px;
+  border: 1px solid rgba(255, 255, 255, 0.13);
+  border-radius: 22px;
+  background: linear-gradient(145deg, rgba(55, 63, 70, 0.88), rgba(38, 45, 52, 0.76));
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.18);
+}
+.config-panel-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; }
+.config-panel-heading h3 { margin-top: 6px; color: var(--ink); font-size: 20px; letter-spacing: -0.04em; }
+.config-panel-heading p { margin-top: 5px; color: var(--muted); font-size: 12px; }
+.config-panel-badge { flex: 0 0 auto; padding: 7px 9px; border: 1px solid rgba(255, 173, 84, 0.24); border-radius: 999px; color: var(--orange-bright); font-size: 9px; font-weight: 800; letter-spacing: 0.1em; }
+.config-form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; align-items: end; margin-top: 16px; }
+.config-form-field, .config-room-fields label { display: flex; min-width: 0; flex-direction: column; gap: 6px; color: var(--muted); font-size: 11px; }
+.config-form-field select, .config-room-fields input, .config-room-fields select, .config-nav-label, .config-entity-label, .config-icon-select {
+  min-height: 36px;
+  min-width: 0;
+  padding: 0 10px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 11px;
+  outline: none;
+  color: var(--ink);
+  background: rgba(17, 23, 27, 0.45);
+}
+.config-form-field select:focus, .config-room-fields input:focus, .config-room-fields select:focus, .config-nav-label:focus, .config-entity-label:focus, .config-icon-select:focus { border-color: rgba(255, 173, 84, 0.64); }
+.config-form-field option, .config-room-fields option, .config-nav-row option, .config-entity-row option { color: #20252a; background: #f1f3f4; }
+.config-sidebar-toggle { display: flex; min-height: 36px; align-items: center; justify-content: flex-start; }
+.config-navigation-list { display: flex; flex-direction: column; gap: 7px; margin-top: 15px; }
+.config-nav-row { display: flex; min-height: 48px; align-items: center; gap: 8px; padding: 6px 8px; border: 1px solid rgba(255, 255, 255, 0.09); border-radius: 14px; cursor: grab; background: rgba(255, 255, 255, 0.055); }
+.config-nav-row:active { cursor: grabbing; }
+.config-nav-row.is-dragging { opacity: 0.48; border-color: var(--orange); }
+.config-nav-row > input[type="checkbox"] { flex: 0 0 auto; accent-color: var(--orange); }
+.config-nav-icon { display: grid; width: 28px; height: 28px; flex: 0 0 auto; place-items: center; color: var(--orange-bright); }
+.config-nav-icon .icon-svg { width: 21px; height: 21px; }
+.config-nav-label { flex: 1; min-width: 120px; font-size: 12px; }
+.config-nav-row .config-icon-select { width: 128px; font-size: 10px; }
+.config-room-fields { display: grid; grid-template-columns: minmax(0, 1fr) 180px; gap: 10px; margin-top: 14px; }
+.config-room-fields input, .config-room-fields select { font-size: 12px; }
+.config-entity-label { width: 120px; min-height: 30px; padding: 0 7px; font-size: 10px; }
+.config-entity-row .config-icon-select { width: 104px; min-height: 30px; padding: 0 6px; font-size: 9px; }
+.config-entity-row .config-entity-copy { min-width: 105px; }
+
+@media (max-width: 900px) {
+  .config-form-grid, .config-room-fields { grid-template-columns: 1fr; }
+  .config-nav-row { flex-wrap: wrap; }
+  .config-nav-label { min-width: calc(100% - 105px); }
+  .config-nav-row .config-icon-select { flex: 1; }
+  .config-entity-row { flex-wrap: wrap; }
+  .config-entity-label { flex: 1; width: auto; }
+}
+

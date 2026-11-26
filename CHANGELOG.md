@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.10.0
+
+- adiciona configuração persistente de aparência, navegação, cômodos e ícones no backend;
+- permite renomear cartões e escolher ícones por entidade sem editar código;
+- organiza a tela de configuração em superfícies Apple Home e inclui clima, persianas e travas como categorias próprias;
+- aplica o tema e a barra lateral escolhidos ao painel sem perder a configuração após reinício.
+
 ## 0.9.1
 
 - Mantém o watchdog do Supervisor no endpoint `/health` para reiniciar automaticamente o app se o processo cair.

@@ -1,4 +1,10 @@
-"""Persistent, user-editable layout configuration for Tecnohead Display."""
+"""Persistent, user-editable layout configuration for Tecnohead Display.
+
+The display is intentionally configured through a small, validated document
+instead of hard-coded front-end rules. The document is stored in the add-on
+data directory, so a restart or an add-on update does not erase the chosen
+rooms, labels, icons, navigation order, or entity selection.
+"""
 
 from __future__ import annotations
 
@@ -16,10 +22,57 @@ GROUP_DEFAULTS = (
 
 SECTION_DEFAULTS = {
     "lighting": True,
+    "climate": True,
     "media": True,
+    "covers": True,
+    "locks": True,
     "cameras": True,
     "other": True,
 }
+
+SECTION_LABELS = {
+    "lighting": "Iluminação",
+    "climate": "Clima",
+    "media": "Áudio e vídeo",
+    "covers": "Persianas e portões",
+    "locks": "Travas",
+    "cameras": "Câmeras",
+    "other": "Outros dispositivos",
+}
+
+# These keys are the only icon names accepted from the editor. The browser
+# maps them to its local SVG icon set; no HTML or SVG is accepted from users.
+ICON_CHOICES = (
+    ("home", "Casa"),
+    ("kitchen", "Cozinha"),
+    ("outdoor", "Externo"),
+    ("garage", "Garagem"),
+    ("light", "Luzes"),
+    ("climate", "Clima"),
+    ("fan", "Ventilação"),
+    ("cover", "Persianas"),
+    ("lock", "Travas"),
+    ("camera", "Câmeras"),
+    ("media", "Áudio"),
+    ("tv", "TV"),
+    ("car", "Carro"),
+    ("energy", "Energia"),
+    ("scene", "Cena"),
+    ("sensor", "Sensor"),
+    ("button", "Ação"),
+)
+VALID_ICON_KEYS = {key for key, _ in ICON_CHOICES}
+
+NAV_DEFAULTS = (
+    ("home", "Casa", "all", "home"),
+    ("lighting", "Luzes", "solution", "light"),
+    ("climate", "Clima", "solution", "climate"),
+    ("covers", "Persianas", "solution", "cover"),
+    ("locks", "Travas", "solution", "lock"),
+    ("cameras", "Câmeras", "cameras", "camera"),
+    ("energy", "Energia", "energy", "energy"),
+    ("garage", "Garagem", "garage", "garage"),
+)
 
 
 def _strings(value: Any, limit: int = 300) -> list[str]:
@@ -33,11 +86,91 @@ def _strings(value: Any, limit: int = 300) -> list[str]:
     return result
 
 
+def _icon(value: Any, fallback: str) -> str:
+    candidate = str(value or "").strip().lower()
+    return candidate if candidate in VALID_ICON_KEYS else fallback
+
+
+def _entity_settings(value: Any, limit: int = 500) -> dict[str, dict[str, str]]:
+    """Normalize per-entity display overrides without accepting arbitrary data."""
+
+    if not isinstance(value, dict):
+        return {}
+    result: dict[str, dict[str, str]] = {}
+    for raw_entity_id, raw_setting in list(value.items())[:limit]:
+        entity_id = str(raw_entity_id).strip()[:255]
+        if not entity_id or not isinstance(raw_setting, dict):
+            continue
+        setting: dict[str, str] = {}
+        label = str(raw_setting.get("label") or "").strip()
+        if label:
+            setting["label"] = label[:80]
+        icon = str(raw_setting.get("icon") or "").strip().lower()
+        if icon in VALID_ICON_KEYS:
+            setting["icon"] = icon
+        if setting:
+            result[entity_id] = setting
+    return result
+
+
+def _navigation(value: Any) -> list[dict[str, object]]:
+    """Keep the known navigation items, in the user's chosen order."""
+
+    raw_items = value if isinstance(value, list) else []
+    by_key = {
+        str(item.get("key")): item
+        for item in raw_items
+        if isinstance(item, dict) and str(item.get("key", "")).strip()
+    }
+    defaults = {key: (label, view, icon) for key, label, view, icon in NAV_DEFAULTS}
+    result: list[dict[str, object]] = []
+    seen: set[str] = set()
+
+    def append(key: str) -> None:
+        if key in seen or key not in defaults:
+            return
+        default_label, view, default_icon = defaults[key]
+        candidate = by_key.get(key) if isinstance(by_key.get(key), dict) else {}
+        result.append(
+            {
+                "key": key,
+                "label": str(candidate.get("label") or default_label)[:40],
+                "view": view,
+                "icon": _icon(candidate.get("icon"), default_icon),
+                "enabled": bool(candidate.get("enabled", True)),
+            }
+        )
+        seen.add(key)
+
+    for item in raw_items:
+        if isinstance(item, dict):
+            append(str(item.get("key") or ""))
+    for key, _, _, _ in NAV_DEFAULTS:
+        append(key)
+    return result
+
+
 def default_layout() -> dict[str, object]:
-    """Return the automatic first-run layout used before a user customizes it."""
+    """Return the automatic first-run layout used before customization."""
 
     return {
-        "version": 1,
+        "version": 2,
+        "appearance": {
+            "theme": "apple-dark",
+            "accent": "orange",
+            "show_sidebar": True,
+        },
+        "navigation": [
+            {
+                "key": key,
+                "label": label,
+                "view": view,
+                "icon": icon,
+                "enabled": True,
+            }
+            for key, label, view, icon in NAV_DEFAULTS
+        ],
+        "entity_settings": {},
         "groups": [
             {
                 "key": key,
@@ -53,6 +186,8 @@ def default_layout() -> dict[str, object]:
             for key, label, icon in GROUP_DEFAULTS
         ],
         "garage": {
+            "label": "Garagem",
+            "icon": "garage",
             "enabled": True,
             "manual": False,
             "entity_ids": [],
@@ -85,7 +220,7 @@ def normalize_layout(value: Any) -> dict[str, object]:
             {
                 "key": key,
                 "label": str(candidate.get("label") or default_label)[:60],
-                "icon": default_icon,
+                "icon": _icon(candidate.get("icon"), default_icon),
                 "enabled": bool(candidate.get("enabled", True)),
                 "area_ids": _strings(candidate.get("area_ids"), 32),
                 "manual": bool(candidate.get("manual", False)),
@@ -95,16 +230,49 @@ def normalize_layout(value: Any) -> dict[str, object]:
             }
         )
 
+    raw_appearance = raw.get("appearance") if isinstance(raw.get("appearance"), dict) else {}
+    theme = str(raw_appearance.get("theme") or "apple-dark").strip().lower()
+    if theme not in {"apple-dark", "graphite-orange"}:
+        theme = "apple-dark"
+    accent = str(raw_appearance.get("accent") or "orange").strip().lower()
+    if accent not in {"orange", "blue", "green"}:
+        accent = "orange"
+
     raw_garage = raw.get("garage") if isinstance(raw.get("garage"), dict) else {}
     return {
-        "version": 1,
+        "version": 2,
+        "appearance": {
+            "theme": theme,
+            "accent": accent,
+            "show_sidebar": bool(raw_appearance.get("show_sidebar", True)),
+        },
+        "navigation": _navigation(raw.get("navigation")),
+        "entity_settings": _entity_settings(raw.get("entity_settings")),
         "groups": groups,
         "garage": {
+            "label": str(raw_garage.get("label") or "Garagem")[:60],
+            "icon": _icon(raw_garage.get("icon"), "garage"),
             "enabled": bool(raw_garage.get("enabled", True)),
             "manual": bool(raw_garage.get("manual", False)),
             "entity_ids": _strings(raw_garage.get("entity_ids")),
             "order": _strings(raw_garage.get("order")),
         },
+    }
+
+
+def layout_schema() -> dict[str, object]:
+    """Return the editor catalog used by the front end."""
+
+    return {
+        "icons": [{"key": key, "label": label} for key, label in ICON_CHOICES],
+        "sections": [
+            {"key": key, "label": label}
+            for key, label in SECTION_LABELS.items()
+        ],
+        "navigation": [
+            {"key": key, "label": label, "view": view, "icon": icon}
+            for key, label, view, icon in NAV_DEFAULTS
+        ],
     }
 
 

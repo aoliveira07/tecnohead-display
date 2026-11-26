@@ -5,6 +5,7 @@
     payload: null,
     layout: null,
     catalog: null,
+    schema: null,
     view: "all",
     areaId: null,
     solutionKey: null,
@@ -42,6 +43,7 @@
   };
 
   const ICON_PATHS = {
+    home: '<path d="m3 11 9-8 9 8v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1v-9Z"/>',
     light: '<path d="M9 17.5h6M10 20.5h4M8.6 14.5c-1.3-1.1-2.1-2.7-2.1-4.6a5.5 5.5 0 0 1 11 0c0 1.9-.8 3.5-2.1 4.6-.8.7-1.2 1.3-1.3 2.1h-4.2c-.1-.8-.5-1.4-1.3-2.1Z"/>',
     sink: '<path d="M4 11.5h16M6 11.5V8a2 2 0 0 1 4 0v1M10 9h8M4 11.5v1.5a5 5 0 0 0 5 5h6a5 5 0 0 0 5-5v-1.5M8 20h8"/>',
     hood: '<path d="M6 5h12v4H6zM4 9h16l1.5 8H2.5L4 9ZM8 20h8"/>',
@@ -92,16 +94,49 @@
   const entityAttributes = (entity) => entity?.attributes || {};
   const entityUnit = (entity) => entityAttributes(entity).unit_of_measurement || "";
 
+  function entityOverride(entity) {
+    return state.layout?.entity_settings?.[entity?.entity_id] || {};
+  }
+
+  function iconChoices() {
+    return state.schema?.icons || [
+      { key: "home", label: "Casa" },
+      { key: "kitchen", label: "Cozinha" },
+      { key: "outdoor", label: "Externo" },
+      { key: "garage", label: "Garagem" },
+      { key: "light", label: "Luzes" },
+      { key: "climate", label: "Clima" },
+      { key: "fan", label: "Ventilação" },
+      { key: "cover", label: "Persianas" },
+      { key: "lock", label: "Travas" },
+      { key: "camera", label: "Câmeras" },
+      { key: "media", label: "Áudio" },
+      { key: "tv", label: "TV" },
+      { key: "car", label: "Carro" },
+      { key: "energy", label: "Energia" },
+      { key: "scene", label: "Cena" },
+      { key: "sensor", label: "Sensor" },
+      { key: "button", label: "Ação" },
+    ];
+  }
+
+  function iconSelect(selected, attributes = "") {
+    return `<select class="config-icon-select" ${attributes}>${iconChoices().map((choice) => `<option value="${esc(choice.key)}" ${choice.key === selected ? "selected" : ""}>${esc(choice.label)}</option>`).join("")}</select>`;
+  }
+
   function svgIcon(kind, className = "") {
     const path = ICON_PATHS[kind] || ICON_PATHS.sensor;
     return `<svg class="icon-svg ${className}" viewBox="0 0 24 24" aria-hidden="true" focusable="false">${path}</svg>`;
   }
 
-  function roomIcon(key) {
-    return svgIcon(key === "cozinha" ? "kitchen" : key === "externo" ? "outdoor" : "garage");
+  function roomIcon(key, customIcon = "") {
+    const fallback = key === "cozinha" ? "kitchen" : key === "externo" ? "outdoor" : "garage";
+    return svgIcon(customIcon || fallback);
   }
 
   function friendlyEntityName(entity) {
+    const override = entityOverride(entity);
+    if (override.label) return String(override.label);
     const raw = String(entity?.name || entity?.entity_id || "Dispositivo");
     const lower = raw.toLowerCase();
     if (lower.includes("charge control") || lower.includes("carga ring")) return "Carregamento";
@@ -127,6 +162,8 @@
 
   function iconFor(entity) {
     const domain = entity?.domain || "sensor";
+    const override = entityOverride(entity);
+    if (override.icon) return svgIcon(override.icon);
     const custom = String(entity?.icon || "");
     const text = `${entity?.name || ""} ${entity?.entity_id || ""} ${custom}`.toLowerCase();
     if (text.includes("pia")) return svgIcon("sink");
@@ -356,16 +393,31 @@
   }
 
   function renderSolutionNav() {
-    const icons = { lighting: "light", climate: "climate", covers: "cover", locks: "lock", cameras: "camera", energy: "energy" };
-    document.querySelectorAll("[data-solution], [data-view='cameras'], .solution-list [data-view='energy']").forEach((button) => {
-      const key = button.dataset.solution || (button.dataset.view === "cameras" ? "cameras" : button.dataset.view === "energy" ? "energy" : "");
-      const icon = button.querySelector(".rail-icon");
-      if (icon && icons[key]) icon.innerHTML = svgIcon(icons[key]);
-      const active = button.dataset.view === "cameras"
-        ? state.view === "cameras"
-        : button.dataset.view === "energy"
-          ? state.view === "energy"
-        : state.view === "solution" && button.dataset.solution === state.solutionKey;
+    const defaults = [
+      { key: "home", label: "Casa", view: "all", icon: "home", enabled: true },
+      { key: "lighting", label: "Luzes", view: "solution", icon: "light", enabled: true },
+      { key: "climate", label: "Clima", view: "solution", icon: "climate", enabled: true },
+      { key: "covers", label: "Persianas", view: "solution", icon: "cover", enabled: true },
+      { key: "locks", label: "Travas", view: "solution", icon: "lock", enabled: true },
+      { key: "cameras", label: "Câmeras", view: "cameras", icon: "camera", enabled: true },
+      { key: "energy", label: "Energia", view: "energy", icon: "energy", enabled: true },
+      { key: "garage", label: "Garagem", view: "garage", icon: "garage", enabled: true },
+    ];
+    const items = Array.isArray(state.layout?.navigation) ? state.layout.navigation : defaults;
+    const nav = $("#solution-list");
+    if (nav) {
+      nav.innerHTML = items.filter((item) => item.enabled !== false).map((item) => `
+        <button class="rail-button" data-view="${esc(item.view)}" ${item.view === "solution" ? `data-solution="${esc(item.key)}"` : ""} type="button">
+          <span class="rail-icon">${svgIcon(item.icon)}</span><span>${esc(item.label)}</span>
+        </button>
+      `).join("");
+    }
+    document.querySelectorAll(".solution-list .rail-button[data-view]").forEach((button) => {
+      const active = button.dataset.view === "all"
+        ? state.view === "all"
+        : button.dataset.view === "solution"
+          ? state.view === "solution" && button.dataset.solution === state.solutionKey
+          : state.view === button.dataset.view;
       button.classList.toggle("is-active", active);
     });
   }
@@ -430,7 +482,7 @@
           return {
             key: group.key,
             label: group.label || group.key,
-            icon: roomIcon(group.key),
+            icon: roomIcon(group.key, group.icon),
             areaId: areaIds[0] || null,
             manual: Boolean(group.manual),
             entities: ordered.filter(visible),
@@ -465,7 +517,10 @@
 
   function entitySection(entity) {
     if (["light", "switch", "fan", "input_boolean"].includes(entity?.domain)) return "lighting";
+    if (entity?.domain === "climate") return "climate";
     if (entity?.domain === "media_player") return "media";
+    if (entity?.domain === "cover") return "covers";
+    if (entity?.domain === "lock") return "locks";
     if (entity?.domain === "camera") return "cameras";
     return "other";
   }
@@ -746,7 +801,7 @@
   let draggedConfigRow = null;
 
   document.addEventListener("dragstart", (event) => {
-    const row = event.target.closest?.(".config-entity-row");
+    const row = event.target.closest?.(".config-entity-row, .config-nav-row");
     if (!row) return;
     draggedConfigRow = row;
     row.classList.add("is-dragging");
@@ -755,7 +810,7 @@
   });
 
   document.addEventListener("dragover", (event) => {
-    const target = event.target.closest?.(".config-entity-row");
+    const target = event.target.closest?.(".config-entity-row, .config-nav-row");
     if (!draggedConfigRow || !target || target === draggedConfigRow) return;
     if (target.closest(".config-entity-list") !== draggedConfigRow.closest(".config-entity-list")) return;
     event.preventDefault();
@@ -763,7 +818,7 @@
   });
 
   document.addEventListener("drop", (event) => {
-    const target = event.target.closest?.(".config-entity-row");
+    const target = event.target.closest?.(".config-entity-row, .config-nav-row");
     if (!draggedConfigRow || !target || target === draggedConfigRow) return;
     if (target.closest(".config-entity-list") !== draggedConfigRow.closest(".config-entity-list")) return;
     event.preventDefault();
@@ -1292,7 +1347,7 @@
   }
 
   function renderGarage() {
-    $("#page-title").textContent = "Garagem";
+    $("#page-title").textContent = state.layout?.garage?.label || "Garagem";
     $("#page-subtitle").textContent = "Carregamento, carro e acesso próximos deste ambiente.";
     $("#garage-vehicle").innerHTML = garageVehicleCard();
     const entities = garageEntitiesForDisplay().filter((entity) => !vehicleCardEntity(entity));
@@ -1337,13 +1392,41 @@
     return result;
   }
 
+  function defaultIconKey(entity) {
+    const domain = entity?.domain || "sensor";
+    const text = `${entity?.name || ""} ${entity?.entity_id || ""}`.toLowerCase();
+    if (text.includes("pia")) return "kitchen";
+    if (text.includes("coifa") || text.includes("hood")) return "fan";
+    if (text.includes("tv") || text.includes("televis")) return "tv";
+    if (domain === "camera") return "camera";
+    if (text.includes("charger") || text.includes("carga") || text.includes("volvo")) return "car";
+    if (text.includes("portão") || text.includes("portao") || text.includes("gate")) return "cover";
+    return ({
+      light: "light",
+      switch: "button",
+      fan: "fan",
+      cover: "cover",
+      climate: "climate",
+      lock: "lock",
+      media_player: "media",
+      camera: "camera",
+      scene: "scene",
+      script: "scene",
+    })[domain] || "sensor";
+  }
+
   function configEntityRow(entity, checked) {
+    const override = entityOverride(entity);
+    const icon = override.icon || defaultIconKey(entity);
+    const label = override.label || friendlyEntityName(entity);
     return `
       <label class="config-entity-row" draggable="true" data-config-entity="${esc(entity.entity_id)}">
         <span class="config-drag-handle" aria-hidden="true">⠿</span>
         <input class="config-entity-check" type="checkbox" data-config-entity-check="${esc(entity.entity_id)}" ${checked ? "checked" : ""}>
-        <span class="config-entity-icon">${iconFor(entity)}</span>
-        <span class="config-entity-copy"><strong>${esc(friendlyEntityName(entity))}</strong><small>${esc(entity.domain)} · ${esc(entity.area_name || "Sem cômodo")}</small></span>
+        <span class="config-entity-icon">${svgIcon(icon)}</span>
+        <span class="config-entity-copy"><strong>${esc(label)}</strong><small>${esc(entity.domain)} · ${esc(entity.area_name || "Sem cômodo")}</small></span>
+        <input class="config-entity-label" data-config-entity-label="${esc(entity.entity_id)}" value="${esc(label)}" aria-label="Nome de ${esc(label)}">
+        ${iconSelect(icon, `data-config-entity-icon="${esc(entity.entity_id)}" aria-label="Ícone de ${esc(label)}"`)}
         <span class="config-entity-state">${esc(humanState(entity))}</span>
         <span class="config-move-buttons"><button type="button" data-config-move="up" aria-label="Mover para cima">↑</button><button type="button" data-config-move="down" aria-label="Mover para baixo">↓</button></span>
       </label>
@@ -1354,6 +1437,7 @@
     const entities = orderedConfigEntities(configEntitiesForGroup(group), group.order);
     const selectedIds = new Set(Array.isArray(group.entity_ids) ? group.entity_ids : []);
     const automatic = !group.manual;
+    const groupIcon = group.icon || (group.key === "cozinha" ? "kitchen" : group.key === "externo" ? "outdoor" : "garage");
     const areaIds = Array.isArray(group.area_ids) && group.area_ids.length
       ? group.area_ids
       : configAreas().filter((area) => roomGroupKey(area) === group.key).map((area) => area.id);
@@ -1369,9 +1453,10 @@
     };
     return `
       <article class="config-room-card" data-config-group="${esc(group.key)}">
-        <div class="config-room-heading"><div class="config-room-title"><span class="config-room-icon">${roomIcon(group.key)}</span><div><h3>${esc(group.label || group.key)}</h3><p>Selecione as áreas espelhadas e os equipamentos visíveis.</p></div></div><label class="config-toggle"><input type="checkbox" data-config-enabled ${group.enabled === false ? "" : "checked"}><span></span><b>Exibir</b></label></div>
+        <div class="config-room-heading"><div class="config-room-title"><span class="config-room-icon">${roomIcon(group.key, groupIcon)}</span><div><h3>${esc(group.label || group.key)}</h3><p>Selecione as áreas, o ícone e os equipamentos visíveis.</p></div></div><label class="config-toggle"><input type="checkbox" data-config-enabled ${group.enabled === false ? "" : "checked"}><span></span><b>Exibir</b></label></div>
+        <div class="config-room-fields"><label><span>Nome na tela</span><input data-config-group-label value="${esc(group.label || group.key)}" maxlength="60"></label><label><span>Ícone do cômodo</span>${iconSelect(groupIcon, 'data-config-group-icon')}</label></div>
         <div class="config-area-block"><div class="config-label">ÁREAS ESPELHADAS</div><div class="config-area-choices">${configAreas().map((area) => `<label class="config-area-choice"><input type="checkbox" data-config-area="${esc(area.id)}" ${areaIds.includes(area.id) ? "checked" : ""}><span>${areaIcon(area)}</span>${esc(area.name)}</label>`).join("") || `<span class="config-empty">Nenhuma área descoberta.</span>`}</div></div>
-        <div class="config-sections">${section("lighting", "Iluminação e acionamentos", "Luzes, interruptores e ventilação")}${section("media", "Áudio e vídeo", "TVs, caixas e players")}${section("cameras", "Câmeras", "Pré-visualizações ao vivo por cômodo")}${section("other", "Outros dispositivos", "Sensores, portões, persianas, cenas e controles auxiliares")}</div>
+        <div class="config-sections">${section("lighting", "Iluminação e acionamentos", "Luzes, interruptores e ventilação")}${section("climate", "Clima", "Ar-condicionado e temperatura")}${section("media", "Áudio e vídeo", "TVs, caixas e players")}${section("covers", "Persianas e portões", "Cortinas, persianas e portões")}${section("locks", "Travas", "Fechaduras e controle de acesso")}${section("cameras", "Câmeras", "Pré-visualizações ao vivo por cômodo")}${section("other", "Outros dispositivos", "Sensores, cenas e controles auxiliares")}</div>
       </article>
     `;
   }
@@ -1387,20 +1472,73 @@
     const automatic = !garageConfig.manual;
     return `
       <article class="config-room-card config-garage-card" data-config-garage>
-        <div class="config-room-heading"><div class="config-room-title"><span class="config-room-icon">${roomIcon("garagem")}</span><div><h3>Dados da garagem</h3><p>Carregamento, portão e dados do Volvo XC40 / EX40.</p></div></div><label class="config-toggle"><input type="checkbox" data-config-garage-enabled ${garageConfig.enabled === false ? "" : "checked"}><span></span><b>Exibir</b></label></div>
+        <div class="config-room-heading"><div class="config-room-title"><span class="config-room-icon">${roomIcon("garagem", garageConfig.icon || "garage")}</span><div><h3>${esc(garageConfig.label || "Garagem")}</h3><p>Carregamento, portão e dados do Volvo XC40 / EX40.</p></div></div><label class="config-toggle"><input type="checkbox" data-config-garage-enabled ${garageConfig.enabled === false ? "" : "checked"}><span></span><b>Exibir</b></label></div>
+        <div class="config-room-fields"><label><span>Nome na tela</span><input data-config-garage-label value="${esc(garageConfig.label || "Garagem")}" maxlength="60"></label><label><span>Ícone da garagem</span>${iconSelect(garageConfig.icon || "garage", 'data-config-garage-icon')}</label></div>
         <div class="config-entity-list" data-config-list="garage">${entities.length ? entities.map((entity) => configEntityRow(entity, automatic || selectedIds.has(entity.entity_id))).join("") : `<div class="config-empty">Nenhuma entidade de garagem encontrada.</div>`}</div>
       </article>
     `;
   }
 
+  function configAppearance() {
+    const appearance = state.layout?.appearance || {};
+    return `
+      <section class="config-panel config-appearance-panel" data-config-appearance>
+        <div class="config-panel-heading"><div><div class="config-label">APARÊNCIA</div><h3>Estilo do display</h3><p>Uma base escura, limpa e próxima do Apple Home, com acento Tecnohead.</p></div><span class="config-panel-badge">APPLE HOME</span></div>
+        <div class="config-form-grid">
+          <label class="config-form-field"><span>Tema</span><select data-config-theme><option value="apple-dark" ${appearance.theme === "apple-dark" ? "selected" : ""}>Apple escuro</option><option value="graphite-orange" ${appearance.theme === "graphite-orange" ? "selected" : ""}>Grafite laranja</option></select></label>
+          <label class="config-form-field"><span>Cor de destaque</span><select data-config-accent><option value="orange" ${appearance.accent !== "blue" && appearance.accent !== "green" ? "selected" : ""}>Laranja Tecnohead</option><option value="blue" ${appearance.accent === "blue" ? "selected" : ""}>Azul suave</option><option value="green" ${appearance.accent === "green" ? "selected" : ""}>Verde estado</option></select></label>
+          <label class="config-toggle config-sidebar-toggle"><input type="checkbox" data-config-show-sidebar ${appearance.show_sidebar === false ? "" : "checked"}><span></span><b>Mostrar barra lateral</b></label>
+        </div>
+      </section>
+    `;
+  }
+
+  function configNavigation() {
+    const defaults = [
+      { key: "home", label: "Casa", view: "all", icon: "home", enabled: true },
+      { key: "lighting", label: "Luzes", view: "solution", icon: "light", enabled: true },
+      { key: "climate", label: "Clima", view: "solution", icon: "climate", enabled: true },
+      { key: "covers", label: "Persianas", view: "solution", icon: "cover", enabled: true },
+      { key: "locks", label: "Travas", view: "solution", icon: "lock", enabled: true },
+      { key: "cameras", label: "Câmeras", view: "cameras", icon: "camera", enabled: true },
+      { key: "energy", label: "Energia", view: "energy", icon: "energy", enabled: true },
+      { key: "garage", label: "Garagem", view: "garage", icon: "garage", enabled: true },
+    ];
+    const items = Array.isArray(state.layout?.navigation) ? state.layout.navigation : defaults;
+    return `
+      <section class="config-panel config-navigation-panel">
+        <div class="config-panel-heading"><div><div class="config-label">NAVEGAÇÃO</div><h3>O que aparece na lateral</h3><p>Ative, renomeie, escolha o ícone e organize a ordem com as setas.</p></div><span class="config-panel-badge">${items.filter((item) => item.enabled !== false).length} ATIVOS</span></div>
+        <div class="config-navigation-list">${items.map((item) => `
+          <div class="config-nav-row" data-config-nav="${esc(item.key)}">
+            <span class="config-drag-handle" aria-hidden="true">⠿</span>
+            <input type="checkbox" data-config-nav-enabled ${item.enabled === false ? "" : "checked"} aria-label="Mostrar ${esc(item.label)}">
+            <span class="config-nav-icon">${svgIcon(item.icon)}</span>
+            <input class="config-nav-label" data-config-nav-label value="${esc(item.label)}" maxlength="40" aria-label="Nome de ${esc(item.label)}">
+            ${iconSelect(item.icon, 'data-config-nav-icon')}
+            <span class="config-move-buttons"><button type="button" data-config-nav-move="up" aria-label="Mover para cima">↑</button><button type="button" data-config-nav-move="down" aria-label="Mover para baixo">↓</button></span>
+          </div>
+        `).join("")}</div>
+      </section>
+    `;
+  }
+
   function renderConfig() {
     $("#page-title").textContent = "Configurar painel";
-    $("#page-subtitle").textContent = "Cômodos, categorias e ordem dos dispositivos.";
+    $("#page-subtitle").textContent = "A aparência, a navegação e os cartões ficam salvos no backend.";
     const groups = Array.isArray(state.layout?.groups) ? state.layout.groups : [];
+    $("#config-appearance").innerHTML = configAppearance();
+    $("#config-navigation").innerHTML = configNavigation();
     $("#config-rooms").innerHTML = groups.map(configRoomCard).join("") + configGarageCard();
   }
 
   function collectLayoutFromConfig() {
+    const entitySettings = { ...(state.layout?.entity_settings || {}) };
+    document.querySelectorAll(".config-entity-row").forEach((row) => {
+      const entityId = row.dataset.configEntity;
+      const label = row.querySelector("[data-config-entity-label]")?.value?.trim();
+      const icon = row.querySelector("[data-config-entity-icon]")?.value;
+      if (entityId && (label || icon)) entitySettings[entityId] = { label, icon };
+    });
     const groups = [...document.querySelectorAll("[data-config-group]")].map((card) => {
       const key = card.dataset.configGroup;
       const current = (state.layout?.groups || []).find((group) => group.key === key) || {};
@@ -1408,6 +1546,8 @@
       return {
         ...current,
         key,
+        label: card.querySelector("[data-config-group-label]")?.value?.trim() || current.label || key,
+        icon: card.querySelector("[data-config-group-icon]")?.value || current.icon,
         enabled: Boolean(card.querySelector("[data-config-enabled]")?.checked),
         area_ids: [...card.querySelectorAll("[data-config-area]:checked")].map((input) => input.dataset.configArea),
         manual: true,
@@ -1420,11 +1560,27 @@
     const garageIds = garageCard
       ? [...garageCard.querySelectorAll(".config-entity-check:checked")].map((input) => input.dataset.configEntityCheck)
       : [];
+    const navigation = [...document.querySelectorAll(".config-nav-row")].map((row) => ({
+      ...(state.layout?.navigation || []).find((item) => item.key === row.dataset.configNav),
+      key: row.dataset.configNav,
+      label: row.querySelector("[data-config-nav-label]")?.value?.trim() || row.dataset.configNav,
+      icon: row.querySelector("[data-config-nav-icon]")?.value || "sensor",
+      enabled: Boolean(row.querySelector("[data-config-nav-enabled]")?.checked),
+    }));
     return {
-      version: 1,
+      version: 2,
+      appearance: {
+        theme: $("[data-config-theme]")?.value || "apple-dark",
+        accent: $("[data-config-accent]")?.value || "orange",
+        show_sidebar: Boolean($("[data-config-show-sidebar]")?.checked),
+      },
+      navigation,
+      entity_settings: entitySettings,
       groups,
       garage: {
         ...(state.layout?.garage || {}),
+        label: garageCard?.querySelector("[data-config-garage-label]")?.value?.trim() || "Garagem",
+        icon: garageCard?.querySelector("[data-config-garage-icon]")?.value || "garage",
         enabled: Boolean(garageCard?.querySelector("[data-config-garage-enabled]")?.checked),
         manual: true,
         entity_ids: garageIds,
@@ -1435,6 +1591,10 @@
 
   function render() {
     if (!state.payload) return;
+    const appearance = state.layout?.appearance || {};
+    document.body.dataset.theme = appearance.theme || "apple-dark";
+    document.body.dataset.accent = appearance.accent || "orange";
+    document.body.classList.toggle("sidebar-hidden", appearance.show_sidebar === false);
     renderRoomList();
     renderSolutionNav();
     renderSidebar();
@@ -1474,6 +1634,7 @@
       const body = await response.json();
       state.layout = body.layout || state.layout;
       state.catalog = body.catalog || state.catalog;
+      state.schema = body.schema || state.schema;
       state.configDirty = false;
       if (state.view === "config") render();
       if (showToast) toast("Configuração carregada");
@@ -1528,6 +1689,7 @@
       state.payload = await response.json();
       state.layout = state.payload.layout_config?.layout || state.layout;
       state.catalog = state.payload.layout_config?.catalog || state.catalog;
+      state.schema = state.payload.layout_config?.schema || state.schema;
       setConnection(true, "Home Assistant conectado");
       render();
       if (showToast) toast("Painel atualizado");
@@ -1709,6 +1871,21 @@
       }
       return;
     }
+    const navMoveButton = event.target.closest("[data-config-nav-move]");
+    if (navMoveButton) {
+      event.preventDefault();
+      event.stopPropagation();
+      const row = navMoveButton.closest(".config-nav-row");
+      const direction = navMoveButton.dataset.configNavMove;
+      if (row && direction === "up" && row.previousElementSibling) {
+        row.parentElement.insertBefore(row, row.previousElementSibling);
+        state.configDirty = true;
+      } else if (row && direction === "down" && row.nextElementSibling) {
+        row.parentElement.insertBefore(row.nextElementSibling, row);
+        state.configDirty = true;
+      }
+      return;
+    }
     const sceneButton = event.target.closest('[data-action="scene"]');
     if (sceneButton) {
       activateScene(sceneButton.dataset.id);
@@ -1774,6 +1951,26 @@
 
   document.addEventListener("change", (event) => {
     if (event.target.closest("#config-view")) state.configDirty = true;
+    const entityIcon = event.target.closest("[data-config-entity-icon]");
+    if (entityIcon) {
+      const preview = entityIcon.closest(".config-entity-row")?.querySelector(".config-entity-icon");
+      if (preview) preview.innerHTML = svgIcon(entityIcon.value);
+    }
+    const navIcon = event.target.closest("[data-config-nav-icon]");
+    if (navIcon) {
+      const preview = navIcon.closest(".config-nav-row")?.querySelector(".config-nav-icon");
+      if (preview) preview.innerHTML = svgIcon(navIcon.value);
+    }
+    const groupIcon = event.target.closest("[data-config-group-icon]");
+    if (groupIcon) {
+      const preview = groupIcon.closest("[data-config-group]")?.querySelector(".config-room-icon");
+      if (preview) preview.innerHTML = svgIcon(groupIcon.value);
+    }
+    const garageIcon = event.target.closest("[data-config-garage-icon]");
+    if (garageIcon) {
+      const preview = garageIcon.closest("[data-config-garage]")?.querySelector(".config-room-icon");
+      if (preview) preview.innerHTML = svgIcon(garageIcon.value);
+    }
     const source = event.target.closest('[data-action="source"]');
     if (source && source.value) sendAction(source.dataset.id, "source", source.value);
     const volume = event.target.closest('[data-action="volume"]');
