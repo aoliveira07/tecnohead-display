@@ -29,7 +29,7 @@ set_display_mode() {
     for _ in 1 2 3 4 5; do
         output=$(xrandr --query 2>/dev/null | awk '$2 == "connected" {print $1; exit}')
         if [ -n "$output" ]; then
-            if xrandr --output "$output" --mode 1920x1080 --rate 60 >/dev/null 2>&1; then
+            if xrandr --output "$output" --mode 1366x768 --rate 60 >/dev/null 2>&1; then
                 return 0
             fi
             if xrandr --output "$output" --auto >/dev/null 2>&1; then
