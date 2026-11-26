@@ -25,11 +25,19 @@ set_display_mode() {
         return 0
     fi
 
+    custom_mode=1366x768_60.00
     output=""
     for _ in 1 2 3 4 5; do
         output=$(xrandr --query 2>/dev/null | awk '$2 == "connected" {print $1; exit}')
         if [ -n "$output" ]; then
             if xrandr --output "$output" --mode 1366x768 --rate 60 >/dev/null 2>&1; then
+                return 0
+            fi
+            # The LG LP156WH4 panel's adapter may omit its native mode from
+            # EDID. Add the panel's exact 70 MHz / 60 Hz timing in that case.
+            xrandr --newmode "$custom_mode" 70.00 1366 1402 1450 1492 768 771 776 782 -hsync -vsync >/dev/null 2>&1 || true
+            xrandr --addmode "$output" "$custom_mode" >/dev/null 2>&1 || true
+            if xrandr --output "$output" --mode "$custom_mode" >/dev/null 2>&1; then
                 return 0
             fi
             if xrandr --output "$output" --auto >/dev/null 2>&1; then
