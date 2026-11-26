@@ -21,7 +21,7 @@ Este projeto é separado do `tecnohead-multimidia`. Ele não importa código, n�
 - sincronização somente leitura de um álbum do Immich para um cache persistente no Home Assistant;
 - normalização automática das fotos sincronizadas para o canvas paisagem 1920×1080 do quiosque;
 - porta-retrato digital após período configurável sem interação, retornando ao painel com um toque.
-- editor de layout persistente para escolher áreas, categorias de dispositivos e ordem por cômodo;
+- editor de layout persistente para escolher aparência Apple Home, barra lateral, áreas, categorias, ícones, nomes e ordem por cômodo;
 - cartão da garagem preparado para dados reais do Volvo XC40/EX40, sem preencher leituras ausentes.
 
 ## Estrutura
@@ -60,7 +60,7 @@ O primeiro corte é intencionalmente automático para permitir instalação imed
 
 ### Editor de layout
 
-Na engrenagem do painel, **Configurar painel** permite selecionar as áreas do Home Assistant que serão espelhadas em Cozinha, Externo e Garagem. Dentro de cada área, as entidades são separadas em iluminação/acionamentos, áudio e vídeo, câmeras e outros dispositivos. A seleção, a ordem e as categorias ficam persistidas em `/data/display-layout.json` no add-on; o modo automático continua sendo o padrão até o primeiro salvamento.
+Na engrenagem do painel, **Configurar painel** permite escolher o tema Apple Home, a cor de destaque, a visibilidade e a ordem da navegação, além das áreas do Home Assistant que serão espelhadas em Cozinha, Externo e Garagem. Cada cômodo pode receber nome e ícone próprios; cada entidade pode receber nome e ícone próprios; e as categorias de iluminação, clima, mídia, persianas, travas, câmeras e outros podem ser ativadas separadamente. A configuração validada fica persistida em `/data/display-layout.json` no add-on e sobrevive a reinícios e atualizações.
 
 ## Qualidade
 
