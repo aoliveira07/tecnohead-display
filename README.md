@@ -60,7 +60,7 @@ O primeiro corte é intencionalmente automático para permitir instalação imed
 
 ### Editor de layout
 
-Na engrenagem do painel, **Configurar painel** permite escolher o tema Apple Home, a cor de destaque, a visibilidade e a ordem da navegação, além das áreas do Home Assistant que serão espelhadas em Cozinha, Externo e Garagem. Cada cômodo pode receber nome e ícone próprios; cada entidade pode receber nome e ícone próprios; e as categorias de iluminação, clima, mídia, persianas, travas, câmeras e outros podem ser ativadas separadamente. A configuração validada fica persistida em `/data/display-layout.json` no add-on e sobrevive a reinícios e atualizações.
+Na engrenagem do painel, **Configurar painel** permite escolher o tema Apple Home, a cor de destaque, a visibilidade e a ordem da navegação, além das áreas do Home Assistant que serão espelhadas em Cozinha, Externo e Garagem. Cada cômodo pode receber nome e ícone próprios; cada entidade pode receber nome e ícone próprios; e as categorias de iluminação, clima, mídia, persianas, travas, câmeras e outros podem ser ativadas separadamente. O editor mostra a versão real do backend para facilitar a verificação da atualização. A configuração validada fica persistida em `/data/display-layout.json` no add-on e sobrevive a reinícios e atualizações.
 
 ## Qualidade
 

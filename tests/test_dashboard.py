@@ -10,6 +10,7 @@ from tecnohead_display.app.dashboard import (
     safe_attributes,
 )
 from tecnohead_display.app.layout_config import DisplayLayoutStore, layout_schema, normalize_layout
+from tecnohead_display.app.version import APP_NAME, APP_VERSION
 
 
 class FakeHomeAssistant:
@@ -165,6 +166,11 @@ def test_layout_schema_exposes_safe_icon_catalog():
     schema = layout_schema()
     assert {item["key"] for item in schema["icons"]} >= {"home", "climate", "camera", "car"}
     assert {item["key"] for item in schema["sections"]} >= {"climate", "covers", "locks"}
+
+
+def test_runtime_version_is_named_and_nonempty():
+    assert APP_NAME == "Tecnohead Display"
+    assert APP_VERSION
 
 
 def test_actions_are_limited_to_known_home_assistant_services():

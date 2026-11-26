@@ -1151,6 +1151,7 @@ body[data-theme="apple-dark"] .sidebar-context { color: var(--muted); }
 .config-panel-heading h3 { margin-top: 6px; color: var(--ink); font-size: 20px; letter-spacing: -0.04em; }
 .config-panel-heading p { margin-top: 5px; color: var(--muted); font-size: 12px; }
 .config-panel-badge { flex: 0 0 auto; padding: 7px 9px; border: 1px solid rgba(255, 173, 84, 0.24); border-radius: 999px; color: var(--orange-bright); font-size: 9px; font-weight: 800; letter-spacing: 0.1em; }
+.config-runtime-status { align-self: center; color: var(--orange-bright); font-size: 10px; font-weight: 800; letter-spacing: 0.08em; white-space: nowrap; }
 .config-form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; align-items: end; margin-top: 16px; }
 .config-form-field, .config-room-fields label { display: flex; min-width: 0; flex-direction: column; gap: 6px; color: var(--muted); font-size: 11px; }
 .config-form-field select, .config-room-fields input, .config-room-fields select, .config-nav-label, .config-entity-label, .config-icon-select {

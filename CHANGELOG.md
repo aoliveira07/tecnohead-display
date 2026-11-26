@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.10.1
+
+- publica a versão real do build em `/health`, `/api/version` e no payload do painel;
+- mostra no editor de layout a versão do backend e confirma que a configuração é persistente;
+- atualiza o identificador dos assets para evitar que o Chromium reutilize o JavaScript/CSS anterior.
+
 ## 0.10.0
 
 - adiciona configuração persistente de aparência, navegação, cômodos e ícones no backend;

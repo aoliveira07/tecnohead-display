@@ -1525,6 +1525,11 @@
   function renderConfig() {
     $("#page-title").textContent = "Configurar painel";
     $("#page-subtitle").textContent = "A aparência, a navegação e os cartões ficam salvos no backend.";
+    const runtimeStatus = $("#config-runtime-status");
+    if (runtimeStatus) {
+      const version = state.payload?.app?.version || "desconhecida";
+      runtimeStatus.textContent = `BACKEND • v${version} • layout persistente`;
+    }
     const groups = Array.isArray(state.layout?.groups) ? state.layout.groups : [];
     $("#config-appearance").innerHTML = configAppearance();
     $("#config-navigation").innerHTML = configNavigation();
