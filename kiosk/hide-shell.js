@@ -11,6 +11,38 @@
     element.style.setProperty(property, value, "important");
   };
 
+  const clearBottomSpacing = (element) => {
+    if (!element) return;
+    setImportant(element, "box-sizing", "border-box");
+    setImportant(element, "margin-bottom", "0");
+    setImportant(element, "padding-bottom", "0");
+  };
+
+  const fillViewport = (element) => {
+    if (!element) return;
+    clearBottomSpacing(element);
+    setImportant(element, "width", "100vw");
+    setImportant(element, "max-width", "100vw");
+    setImportant(element, "height", "100vh");
+    setImportant(element, "min-height", "100vh");
+    setImportant(element, "margin-top", "0");
+    setImportant(element, "margin-left", "0");
+    setImportant(element, "margin-right", "0");
+  };
+
+  // Chromium is already running fullscreen at the panel's native 1366x768
+  // viewport. Normalize the document and Home Assistant's shell as well so
+  // the frontend cannot leave its default bottom safe-area/padding strip on
+  // any route (Today, rooms, categories, cameras, or settings).
+  const normalizeGlobalViewport = (homeAssistant, main) => {
+    fillViewport(document.documentElement);
+    fillViewport(document.body);
+    setImportant(document.documentElement, "overflow", "hidden");
+    setImportant(document.body, "overflow", "hidden");
+    fillViewport(homeAssistant);
+    fillViewport(main);
+  };
+
   // Home Assistant moves the sidebar and app panel between light DOM and
   // nested open shadow roots as its frontend evolves. Keep this traversal
   // deliberately scoped to the top-level shell; the Tecnohead iframe is not
@@ -32,6 +64,7 @@
   const hideHomeAssistantShell = () => {
     const homeAssistant = document.querySelector("home-assistant");
     const main = homeAssistant?.shadowRoot?.querySelector("home-assistant-main");
+    normalizeGlobalViewport(homeAssistant, main);
     const drawer = main?.shadowRoot?.querySelector("ha-drawer") || findDeep(document, "ha-drawer");
     const sidebar = drawer?.shadowRoot?.querySelector("ha-sidebar")
       || drawer?.querySelector("ha-sidebar")
@@ -51,18 +84,29 @@
     if (!sidebar || !panel || !appContent) return false;
 
     setImportant(sidebar, "display", "none");
+    fillViewport(drawer);
     setImportant(drawer, "width", "100%");
     setImportant(drawer, "margin-left", "0");
+    clearBottomSpacing(drawer);
     setImportant(appContent, "padding-inline-start", "0");
     setImportant(appContent, "padding-left", "0");
     setImportant(appContent, "width", "100%");
+    setImportant(appContent, "height", "100%");
+    setImportant(appContent, "min-height", "100%");
+    clearBottomSpacing(appContent);
     setImportant(resolver, "width", "100%");
     setImportant(resolver, "margin-left", "0");
+    fillViewport(resolver);
     setImportant(panel, "width", "100%");
     setImportant(panel, "margin-left", "0");
-    setImportant(panelRoot?.querySelector("ha-app-layout"), "width", "100%");
-    setImportant(panelRoot?.querySelector("main"), "width", "100%");
-    setImportant(panelRoot?.querySelector("main"), "margin-left", "0");
+    fillViewport(panel);
+    const appLayout = findDeep(panelRoot, "ha-app-layout");
+    const panelMain = findDeep(panelRoot, "main");
+    fillViewport(appLayout);
+    setImportant(appLayout, "width", "100%");
+    fillViewport(panelMain);
+    setImportant(panelMain, "width", "100%");
+    setImportant(panelMain, "margin-left", "0");
     return true;
   };
 
